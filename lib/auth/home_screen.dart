@@ -1,9 +1,27 @@
 import 'package:flutter/material.dart';
-import 'signin_screen.dart';
-import 'signup_screen.dart';
+import 'opening.dart';
 
-class HomeScreen extends StatelessWidget {
+class HomeScreen extends StatefulWidget {
   const HomeScreen({super.key});
+
+  @override
+  State<HomeScreen> createState() => _HomeScreenState();
+}
+
+class _HomeScreenState extends State<HomeScreen> {
+
+  @override
+  void initState() {
+    super.initState();
+
+    // Tampilkan splash 4 detik, lalu pindah ke Opening
+    Future.delayed(const Duration(seconds: 4), () {
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (_) => const OnboardingScreen()),
+      );
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -11,7 +29,7 @@ class HomeScreen extends StatelessWidget {
       body: Container(
         decoration: const BoxDecoration(
           image: DecorationImage(
-            image: AssetImage('images/walpapers.jpeg'), // Path yang diperbaiki
+            image: AssetImage('images/window.jpeg'),
             fit: BoxFit.cover,
           ),
         ),
@@ -34,28 +52,20 @@ class HomeScreen extends StatelessWidget {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    // Logo dengan background transparan seperti di login
-                    Container(
-                      padding: const EdgeInsets.all(20),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2), // Lebih transparan
-                        shape: BoxShape.circle,
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.3),
-                          width: 2,
-                        ),
-                      ),
-                      child: const Icon(
-                        Icons.agriculture,
-                        size: 60,
-                        color: Colors.white, // Warna putih seperti di login
-                      ),
+
+                    // LOGO
+                    Image.asset(
+                      'images/logo1.png',
+                      width: 90,
+                      height: 90,
+                      fit: BoxFit.contain,
                     ),
-                    const SizedBox(height: 30),
-                    
-                    // Judul utama
+
+                    const SizedBox(height: 20),
+
+                    // TITLE
                     const Text(
-                      'Welcome to Smart Farming Tomato',
+                      'Welcome to Tomagrow',
                       style: TextStyle(
                         color: Colors.white,
                         fontSize: 32,
@@ -64,7 +74,10 @@ class HomeScreen extends StatelessWidget {
                       ),
                       textAlign: TextAlign.center,
                     ),
+
                     const SizedBox(height: 10),
+
+                    // SUBTITLE
                     const Text(
                       'Your Smart Tomato Farming Companion',
                       style: TextStyle(
@@ -74,108 +87,26 @@ class HomeScreen extends StatelessWidget {
                       ),
                       textAlign: TextAlign.center,
                     ),
+
                     const SizedBox(height: 40),
-                    
-                    // Login Button
-                    Container(
-                      width: double.infinity,
-                      height: 55,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.green.withOpacity(0.4),
-                            blurRadius: 10,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SignInScreen()),
-                          );
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.login, size: 20),
-                            SizedBox(width: 10),
-                            Text(
-                              'LOGIN',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
+
+                    // LOADING
+                    const CircularProgressIndicator(
+                      color: Colors.green,
+                      strokeWidth: 3,
                     ),
+
                     const SizedBox(height: 20),
-                    
-                    // Sign Up Button
-                    Container(
-                      width: double.infinity,
-                      height: 55,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(30),
-                        border: Border.all(color: Colors.white, width: 2),
-                      ),
-                      child: OutlinedButton(
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (_) => const SignUpScreen()),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: Colors.white,
-                          side: const BorderSide(color: Colors.white, width: 2),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(30),
-                          ),
-                          backgroundColor: Colors.white.withOpacity(0.1),
-                        ),
-                        child: const Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Icon(Icons.person_add, size: 20),
-                            SizedBox(width: 10),
-                            Text(
-                              'SIGN UP',
-                              style: TextStyle(
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.1,
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                    
-                    const SizedBox(height: 40),
-                    
-                    // Footer text
+
                     const Text(
-                      'Start Your Farming Journey Today',
+                      'Preparing your experience...',
                       style: TextStyle(
                         color: Colors.white54,
                         fontSize: 14,
                         fontStyle: FontStyle.italic,
                       ),
                     ),
+
                   ],
                 ),
               ),
