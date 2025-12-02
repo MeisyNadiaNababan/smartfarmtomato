@@ -42,22 +42,25 @@ class NotificationService {
         data.forEach((key, value) {
           try {
             final timestamp = _parseTimestamp(value['timestamp']);
-            
+
             // Format tanggal untuk display - PERBAIKAN: Ambil dari createdAt jika ada
             DateTime notificationDate;
             if (value['createdAt'] != null) {
               try {
-                notificationDate = DateTime.parse(value['createdAt'].toString());
+                notificationDate =
+                    DateTime.parse(value['createdAt'].toString());
               } catch (e) {
-                notificationDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
+                notificationDate =
+                    DateTime.fromMillisecondsSinceEpoch(timestamp);
               }
             } else {
               notificationDate = DateTime.fromMillisecondsSinceEpoch(timestamp);
             }
-            
+
             // Debug info
-            print('🔍 Notification: ${value['title']} - Date: ${notificationDate.toString()}');
-            
+            print(
+                '🔍 Notification: ${value['title']} - Date: ${notificationDate.toString()}');
+
             notifications.add(NotificationItem(
               id: key.toString(),
               title: value['title']?.toString() ?? 'Notifikasi',
@@ -80,7 +83,7 @@ class NotificationService {
       return notifications;
     });
   }
-  
+
   static int _parseTimestamp(dynamic timestamp) {
     if (timestamp == null) {
       return DateTime.now().millisecondsSinceEpoch;
@@ -283,7 +286,7 @@ class NotificationItem {
     required this.isRead,
     required this.type,
   });
-  
+
   // PERBAIKAN: Gunakan createdAt jika ada, jika tidak gunakan timestamp
   DateTime get dateTime {
     if (createdAt != null) {
@@ -295,23 +298,23 @@ class NotificationItem {
     }
     return DateTime.fromMillisecondsSinceEpoch(timestamp);
   }
-  
+
   String get formattedTime {
     final now = DateTime.now();
     final difference = now.difference(dateTime);
-    
+
     if (difference.inMinutes < 1) return 'Baru saja';
     if (difference.inHours < 1) return '${difference.inMinutes}m yang lalu';
     if (difference.inDays < 1) return '${difference.inHours}j yang lalu';
     if (difference.inDays < 7) return '${difference.inDays}h yang lalu';
-    
+
     return DateFormat('dd/MM/yyyy HH:mm').format(dateTime);
   }
 
   String get fullFormattedTime {
     return DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
   }
-  
+
   // Tambahkan getter untuk tanggal yang diformat seperti contoh
   String get systemFormattedDate {
     return DateFormat('yyyy-MM-dd HH:mm:ss').format(dateTime);
@@ -364,7 +367,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref();
-  
+
   List<LogEntry> _logs = [];
   LogEntry? _realtimeData;
   bool _isLoading = true;
@@ -378,7 +381,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final Color _teal = const Color(0xFF00695C);
   final Color _lightGreen = const Color(0xFF4CAF50);
   final Color _gray = const Color(0xFF757575);
-  
+
   @override
   void initState() {
     super.initState();
@@ -398,7 +401,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
   void _handleRealtimeData(dynamic data) {
     if (data != null && data is Map) {
       setState(() {
-        _realtimeData = _createLogEntry('realtime', data, DateTime.now().millisecondsSinceEpoch);
+        _realtimeData = _createLogEntry(
+            'realtime', data, DateTime.now().millisecondsSinceEpoch);
       });
     }
   }
@@ -409,11 +413,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
       _hasError = false;
     });
 
-    _databaseRef.child('history_data')
-      .orderByKey()
-      .limitToLast(100)
-      .once()
-      .then((DatabaseEvent event) {
+    _databaseRef
+        .child('history_data')
+        .orderByKey()
+        .limitToLast(100)
+        .once()
+        .then((DatabaseEvent event) {
       try {
         final data = event.snapshot.value;
         final List<LogEntry> logs = [];
@@ -458,7 +463,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       final dateString = data['datetime'].toString();
       final dateTime = DateTime.tryParse(dateString);
       if (dateTime != null) return dateTime.millisecondsSinceEpoch;
-      
+
       // Coba format manual jika ISO gagal
       if (dateString.contains('-') && dateString.contains(':')) {
         try {
@@ -474,8 +479,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               final hour = int.tryParse(timeParts[0]) ?? 0;
               final minute = int.tryParse(timeParts[1]) ?? 0;
               final second = int.tryParse(timeParts[2]) ?? 0;
-              
-              final manualDateTime = DateTime(year, month, day, hour, minute, second);
+
+              final manualDateTime =
+                  DateTime(year, month, day, hour, minute, second);
               return manualDateTime.millisecondsSinceEpoch;
             }
           }
@@ -494,11 +500,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
         return millis < 100000000000 ? millis * 1000 : millis;
       }
     }
-    
+
     return DateTime.now().millisecondsSinceEpoch;
   }
 
-  LogEntry _createLogEntry(String id, Map<dynamic, dynamic> data, int timestamp) {
+  LogEntry _createLogEntry(
+      String id, Map<dynamic, dynamic> data, int timestamp) {
     return LogEntry(
       id: id,
       timestamp: timestamp,
@@ -510,7 +517,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
       operationMode: data['mode_operasi']?.toString() ?? 'AUTO',
       pumpStatus: data['status_pompa']?.toString() ?? 'OFF',
       plantStage: data['tahapan_tanaman']?.toString() ?? 'BIBIT',
-      plantAge: data['umur_tanaman'] != null ? int.tryParse(data['umur_tanaman'].toString()) : 1,
+      plantAge: data['umur_tanaman'] != null
+          ? int.tryParse(data['umur_tanaman'].toString())
+          : 1,
       timeOfDay: data['waktu']?.toString(),
       datetime: data['datetime']?.toString(),
     );
@@ -530,10 +539,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
 
   // Hitung statistik
   int get _totalData => _logs.length;
-  int get _drySoilCount => _logs.where((log) => 
-    log.soilCategory == 'SANGAT KERING' || log.soilCategory == 'KERING').length;
+  int get _drySoilCount => _logs
+      .where((log) =>
+          log.soilCategory == 'SANGAT KERING' || log.soilCategory == 'KERING')
+      .length;
   int get _pumpOnCount => _logs.where((log) => log.pumpStatus == 'ON').length;
-  int get _autoModeCount => _logs.where((log) => log.operationMode == 'AUTO').length;
+  int get _autoModeCount =>
+      _logs.where((log) => log.operationMode == 'AUTO').length;
 
   @override
   Widget build(BuildContext context) {
@@ -554,7 +566,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              
+
               // Realtime Data Card - DIPERBAIKI untuk format seperti ESP32
               if (_realtimeData != null) _buildRealtimeCard(),
               const SizedBox(height: 16),
@@ -594,10 +606,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildRealtimeCard() {
     final log = _realtimeData!;
     final date = DateTime.fromMillisecondsSinceEpoch(log.timestamp);
-    
+
     // Format tanggal seperti ESP32: "2025-11-28 20:56:20"
     final formattedDateTime = DateFormat('yyyy-MM-dd HH:mm:ss').format(date);
-    
+
     // Format untuk display
     final timeFormat = DateFormat('HH:mm:ss');
     final dateFormat = DateFormat('yyyy/MM/dd');
@@ -643,7 +655,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ],
           ),
           const SizedBox(height: 4),
-          
+
           // PERBAIKAN: Tambahkan informasi seperti ESP32
           Text(
             '🌱 Sistem Siap | ${log.plantStage} | Hari ke-${log.plantAge ?? 1}',
@@ -661,7 +673,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // Data Real-Time section
           Container(
             padding: const EdgeInsets.all(12),
@@ -685,9 +697,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildRealtimeDataItem('${log.temperature?.toStringAsFixed(1) ?? '-'}°C'),
-                      _buildRealtimeDataItem('${log.humidity?.toStringAsFixed(1) ?? '-'}%'),
-                      _buildRealtimeDataItem('${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%'),
+                      _buildRealtimeDataItem(
+                          '${log.temperature?.toStringAsFixed(1) ?? '-'}°C'),
+                      _buildRealtimeDataItem(
+                          '${log.humidity?.toStringAsFixed(1) ?? '-'}%'),
+                      _buildRealtimeDataItem(
+                          '${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%'),
                     ],
                   ),
                 ),
@@ -695,13 +710,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // Status bar
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
@@ -709,15 +725,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      log.pumpStatus == 'ON' ? Icons.water_drop : Icons.water_drop_outlined,
-                      color: log.pumpStatus == 'ON' ? Colors.greenAccent : Colors.white70,
+                      log.pumpStatus == 'ON'
+                          ? Icons.water_drop
+                          : Icons.water_drop_outlined,
+                      color: log.pumpStatus == 'ON'
+                          ? Colors.greenAccent
+                          : Colors.white70,
                       size: 16,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Pompa: ${log.pumpStatus}',
                       style: TextStyle(
-                        color: log.pumpStatus == 'ON' ? Colors.greenAccent : Colors.white70,
+                        color: log.pumpStatus == 'ON'
+                            ? Colors.greenAccent
+                            : Colors.white70,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -726,7 +748,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
@@ -734,15 +757,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 child: Row(
                   children: [
                     Icon(
-                      log.operationMode == 'AUTO' ? Icons.auto_awesome : Icons.settings,
-                      color: log.operationMode == 'AUTO' ? Colors.blueAccent : Colors.orangeAccent,
+                      log.operationMode == 'AUTO'
+                          ? Icons.auto_awesome
+                          : Icons.settings,
+                      color: log.operationMode == 'AUTO'
+                          ? Colors.blueAccent
+                          : Colors.orangeAccent,
                       size: 16,
                     ),
                     const SizedBox(width: 4),
                     Text(
                       'Mode: ${log.operationMode}',
                       style: TextStyle(
-                        color: log.operationMode == 'AUTO' ? Colors.blueAccent : Colors.orangeAccent,
+                        color: log.operationMode == 'AUTO'
+                            ? Colors.blueAccent
+                            : Colors.orangeAccent,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -787,16 +816,21 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildSummaryItem('Total Data', _totalData.toString(), Icons.list, _darkGreen),
-          _buildSummaryItem('Pompa ON', _pumpOnCount.toString(), Icons.water_drop, _blue),
-          _buildSummaryItem('Tanah Kering', _drySoilCount.toString(), Icons.grass, _orange),
-          _buildSummaryItem('Auto Mode', _autoModeCount.toString(), Icons.smart_toy, _teal),
+          _buildSummaryItem(
+              'Total Data', _totalData.toString(), Icons.list, _darkGreen),
+          _buildSummaryItem(
+              'Pompa ON', _pumpOnCount.toString(), Icons.water_drop, _blue),
+          _buildSummaryItem(
+              'Tanah Kering', _drySoilCount.toString(), Icons.grass, _orange),
+          _buildSummaryItem(
+              'Auto Mode', _autoModeCount.toString(), Icons.smart_toy, _teal),
         ],
       ),
     );
   }
 
-  Widget _buildSummaryItem(String title, String value, IconData icon, Color color) {
+  Widget _buildSummaryItem(
+      String title, String value, IconData icon, Color color) {
     return Column(
       children: [
         Container(
@@ -841,9 +875,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final date = DateTime.fromMillisecondsSinceEpoch(log.timestamp);
     final timeFormat = DateFormat('HH:mm:ss');
     final dateFormat = DateFormat('yyyy/MM/dd');
-    
+
     // Format datetime seperti ESP32 jika tersedia
-    final displayDateTime = log.datetime ?? DateFormat('yyyy-MM-dd HH:mm:ss').format(date);
+    final displayDateTime =
+        log.datetime ?? DateFormat('yyyy-MM-dd HH:mm:ss').format(date);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -866,9 +901,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                 decoration: BoxDecoration(
-                  color: log.operationMode == 'AUTO' ? _blue.withOpacity(0.1) : _orange.withOpacity(0.1),
+                  color: log.operationMode == 'AUTO'
+                      ? _blue.withOpacity(0.1)
+                      : _orange.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
@@ -883,7 +921,8 @@ class _HistoryScreenState extends State<HistoryScreen> {
               if (log.timeOfDay != null) ...[
                 const SizedBox(width: 8),
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                   decoration: BoxDecoration(
                     color: _gray.withOpacity(0.1),
                     borderRadius: BorderRadius.circular(6),
@@ -908,9 +947,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          
+
           // Tambahkan informasi tanaman
-          if (log.plantStage != null)
+          if (log.plantStage.isNotEmpty)
             Text(
               '🌱 ${log.plantStage} | Hari ke-${log.plantAge ?? 1}',
               style: TextStyle(
@@ -928,19 +967,25 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
           ),
           const SizedBox(height: 12),
-          
+
           // Data sensor dalam row
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildSensorItem('🌡️', '${log.temperature?.toStringAsFixed(1) ?? '-'}°C', _red),
-              _buildSensorItem('💧', '${log.humidity?.toStringAsFixed(0) ?? '-'}%', _blue),
-              _buildSensorItem('🌱', '${log.soilMoisture?.toStringAsFixed(0) ?? '-'}%', _darkGreen),
-              _buildSensorItem('💡', '${log.brightness?.toStringAsFixed(1) ?? '-'}%', _orange),
+              _buildSensorItem('🌡️',
+                  '${log.temperature?.toStringAsFixed(1) ?? '-'}°C', _red),
+              _buildSensorItem(
+                  '💧', '${log.humidity?.toStringAsFixed(0) ?? '-'}%', _blue),
+              _buildSensorItem(
+                  '🌱',
+                  '${log.soilMoisture?.toStringAsFixed(0) ?? '-'}%',
+                  _darkGreen),
+              _buildSensorItem('💡',
+                  '${log.brightness?.toStringAsFixed(1) ?? '-'}%', _orange),
             ],
           ),
           const SizedBox(height: 12),
-          
+
           // Status bar
           Row(
             children: [
@@ -950,7 +995,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 log.pumpStatus == 'ON' ? Colors.green : Colors.grey,
               ),
               const SizedBox(width: 8),
-              if (log.soilCategory != null) 
+              if (log.soilCategory != null)
                 _buildStatusChip(
                   'Tanah: ${log.soilCategory}',
                   false,
