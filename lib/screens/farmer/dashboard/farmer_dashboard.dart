@@ -3,10 +3,11 @@ import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
 import 'farmer_notifications.dart';
 import 'simple_chart.dart';
-import '../control/farmer_control.dart';  
-import '../history/farmer_history.dart';  
-import '../settings/farmer_settings.dart'; 
+import '../control/farmer_control.dart';
+import '../history/farmer_history.dart';
+import '../settings/farmer_settings.dart';
 import '../../../providers/theme_provider.dart';
+import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class FarmerDashboardScreen extends StatefulWidget {
   const FarmerDashboardScreen({super.key});
@@ -75,17 +76,19 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
 
         if (data != null && data is Map) {
           print('📡 Received sensor data: $data');
-          
+
           setState(() {
             sensorData = {
               'suhu': _toDouble(data['suhu']),
               'status_suhu': data['status_suhu']?.toString() ?? 'Normal',
               'kelembaban_udara': _toDouble(data['kelembaban_udara']),
-              'status_kelembaban': data['status_kelembaban']?.toString() ?? 'Normal',
+              'status_kelembaban':
+                  data['status_kelembaban']?.toString() ?? 'Normal',
               'kelembaban_tanah': _toDouble(data['kelembaban_tanah']),
               'kategori_tanah': data['kategori_tanah']?.toString() ?? 'Normal',
               'kecerahan': _toDouble(data['kecerahan']),
-              'kategori_cahaya': data['kategori_cahaya']?.toString() ?? 'Normal',
+              'kategori_cahaya':
+                  data['kategori_cahaya']?.toString() ?? 'Normal',
             };
             _isLoading = false;
           });
@@ -131,13 +134,15 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
 
   void _updateChartData() {
     final now = DateTime.now();
-    final timeLabel = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
-    
+    final timeLabel =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+
     setState(() {
       temperatureData.add(ChartData(timeLabel, sensorData['suhu']));
       humidityData.add(ChartData(timeLabel, sensorData['kelembaban_udara']));
-      soilMoistureData.add(ChartData(timeLabel, sensorData['kelembaban_tanah']));
-      
+      soilMoistureData
+          .add(ChartData(timeLabel, sensorData['kelembaban_tanah']));
+
       if (temperatureData.length > 10) {
         temperatureData.removeAt(0);
         humidityData.removeAt(0);
@@ -268,7 +273,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
 
   Widget _buildNotificationsSheet() {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: BoxDecoration(
@@ -320,7 +325,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
           ),
           Expanded(
             child: StreamBuilder<List<NotificationItem>>(
-              stream: _notificationsEnabled 
+              stream: _notificationsEnabled
                   ? NotificationService.getNotifications()
                   : Stream.value([]),
               builder: (context, snapshot) {
@@ -331,29 +336,35 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                     ),
                   );
                 }
-                
+
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.notifications_none, 
-                          size: 60, 
-                          color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
+                          Icons.notifications_none,
+                          size: 60,
+                          color: Theme.of(context)
+                              .colorScheme
+                              .onBackground
+                              .withOpacity(0.5),
                         ),
                         const SizedBox(height: 16),
                         Text(
                           'Tidak ada notifikasi',
                           style: TextStyle(
-                            color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                            color: Theme.of(context)
+                                .colorScheme
+                                .onBackground
+                                .withOpacity(0.7),
                           ),
                         ),
                       ],
                     ),
                   );
                 }
-                
+
                 final notifications = snapshot.data!;
                 return ListView.builder(
                   itemCount: notifications.length,
@@ -372,17 +383,17 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
 
   Widget _buildNotificationItem(NotificationItem notification) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: notification.isRead 
+        color: notification.isRead
             ? Theme.of(context).colorScheme.surface
             : Theme.of(context).colorScheme.primary.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: notification.isRead 
+          color: notification.isRead
               ? Theme.of(context).colorScheme.outline.withOpacity(0.2)
               : Theme.of(context).colorScheme.primary.withOpacity(0.3),
         ),
@@ -409,7 +420,9 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 Text(
                   notification.title,
                   style: TextStyle(
-                    fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                    fontWeight: notification.isRead
+                        ? FontWeight.normal
+                        : FontWeight.bold,
                     fontSize: 14,
                     color: Theme.of(context).colorScheme.onBackground,
                   ),
@@ -418,16 +431,22 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 Text(
                   notification.message,
                   style: TextStyle(
-                    fontSize: 12, 
-                    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.7),
+                    fontSize: 12,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onBackground
+                        .withOpacity(0.7),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   notification.formattedTime,
                   style: TextStyle(
-                    fontSize: 10, 
-                    color: Theme.of(context).colorScheme.onBackground.withOpacity(0.5),
+                    fontSize: 10,
+                    color: Theme.of(context)
+                        .colorScheme
+                        .onBackground
+                        .withOpacity(0.5),
                   ),
                 ),
               ],
@@ -451,17 +470,18 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    
+
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: isDarkMode 
+        backgroundColor: isDarkMode
             ? Theme.of(context).colorScheme.background
             : Colors.white,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              CircularProgressIndicator(color: Theme.of(context).colorScheme.primary),
+              CircularProgressIndicator(
+                  color: Theme.of(context).colorScheme.primary),
               const SizedBox(height: 20),
               Container(
                 padding: const EdgeInsets.all(16),
@@ -488,8 +508,11 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               Text(
                 'Memuat data sensor...',
                 style: TextStyle(
-                  fontSize: 14, 
-                  color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6),
+                  fontSize: 14,
+                  color: Theme.of(context)
+                      .colorScheme
+                      .onBackground
+                      .withOpacity(0.6),
                 ),
               ),
             ],
@@ -499,9 +522,8 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: isDarkMode 
-          ? Theme.of(context).colorScheme.background
-          : Colors.white,
+      backgroundColor:
+          isDarkMode ? Theme.of(context).colorScheme.background : Colors.white,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -528,7 +550,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 const SizedBox(height: 24),
                 _buildChartSection(isDarkMode),
                 const SizedBox(height: 24),
-                _buildQuickActions(isDarkMode),
+                _buildLandInfoCard(isDarkMode),
               ],
             ),
           ),
@@ -548,17 +570,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Monitoring Real-time',
-                    style: TextStyle(
-                      fontSize: 16,
-                      color: isDarkMode 
-                          ? Colors.white.withOpacity(0.7)
-                          : Colors.grey[600],
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Smart Farming Tomat',
+                    'Welcome to SmartFarm Tomato',
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
@@ -581,7 +593,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.notifications, 
+                      Icons.notifications,
                       color: isDarkMode ? Colors.blue[200] : Colors.blue,
                     ),
                   ),
@@ -601,7 +613,9 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                         minHeight: 16,
                       ),
                       child: Text(
-                        _unreadNotifications > 9 ? '9+' : _unreadNotifications.toString(),
+                        _unreadNotifications > 9
+                            ? '9+'
+                            : _unreadNotifications.toString(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -617,47 +631,14 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
         ),
         const SizedBox(height: 8),
         Text(
-          'Data terkini dari sensor kebun tomat',
+          'Monitoring realtime data pertanian tomat',
           style: TextStyle(
             fontSize: 14,
-            color: isDarkMode 
-                ? Colors.white.withOpacity(0.6)
-                : Colors.grey[600],
+            color:
+                isDarkMode ? Colors.white.withOpacity(0.6) : Colors.grey[600],
           ),
         ),
         const SizedBox(height: 8),
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: isDarkMode 
-                ? Colors.green.withOpacity(0.2)
-                : Colors.green[50],
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(
-              color: isDarkMode 
-                  ? Colors.green.withOpacity(0.4)
-                  : Colors.green.withOpacity(0.3)),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                Icons.cloud_sync, 
-                color: isDarkMode ? Colors.green[300] : Colors.green[700], 
-                size: 16
-              ),
-              const SizedBox(width: 6),
-              Text(
-                'Terhubung ke Database',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: isDarkMode ? Colors.green[300] : Colors.green[700],
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-            ],
-          ),
-        ),
       ],
     );
   }
@@ -666,13 +647,23 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(
-          'Data Sensor Real-time',
-          style: TextStyle(
-            fontSize: 18, 
-            fontWeight: FontWeight.bold,
-            color: isDarkMode ? Colors.white : Colors.black,
-          ),
+        Row(
+          children: [
+            Icon(
+              Icons.power_settings_new,
+              color: const Color.fromARGB(255, 45, 167, 49),
+              size: 26,
+            ),
+            const SizedBox(width: 8), // Jarak antara icon dan teks
+            Text(
+              'Data Sensor Real-time',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+          ],
         ),
         const SizedBox(height: 16),
         GridView.count(
@@ -690,8 +681,10 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               unit: 'Celcius',
               status: sensorData['status_suhu']?.toString() ?? 'Normal',
               color: const Color(0xFF006B5D),
-              statusColor: _getStatusColor(sensorData['status_suhu']?.toString() ?? 'Normal'),
-              description: _getStatusDescription('suhu', sensorData['status_suhu']?.toString() ?? 'Normal'),
+              statusColor: _getStatusColor(
+                  sensorData['status_suhu']?.toString() ?? 'Normal'),
+              description: _getStatusDescription(
+                  'suhu', sensorData['status_suhu']?.toString() ?? 'Normal'),
               isDarkMode: isDarkMode,
             ),
             _buildSensorCard(
@@ -701,8 +694,10 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               unit: 'Persen',
               status: sensorData['status_kelembaban']?.toString() ?? 'Normal',
               color: const Color(0xFFB8860B),
-              statusColor: _getStatusColor(sensorData['status_kelembaban']?.toString() ?? 'Normal'),
-              description: _getStatusDescription('kelembaban_udara', sensorData['status_kelembaban']?.toString() ?? 'Normal'),
+              statusColor: _getStatusColor(
+                  sensorData['status_kelembaban']?.toString() ?? 'Normal'),
+              description: _getStatusDescription('kelembaban_udara',
+                  sensorData['status_kelembaban']?.toString() ?? 'Normal'),
               isDarkMode: isDarkMode,
             ),
             _buildSensorCard(
@@ -712,8 +707,10 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               unit: 'Persen',
               status: sensorData['kategori_tanah']?.toString() ?? 'Normal',
               color: const Color(0xFF558B2F),
-              statusColor: _getStatusColor(sensorData['kategori_tanah']?.toString() ?? 'Normal'),
-              description: _getStatusDescription('kelembaban_tanah', sensorData['kategori_tanah']?.toString() ?? 'Normal'),
+              statusColor: _getStatusColor(
+                  sensorData['kategori_tanah']?.toString() ?? 'Normal'),
+              description: _getStatusDescription('kelembaban_tanah',
+                  sensorData['kategori_tanah']?.toString() ?? 'Normal'),
               isDarkMode: isDarkMode,
             ),
             _buildSensorCard(
@@ -723,8 +720,10 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               unit: 'Lux',
               status: sensorData['kategori_cahaya']?.toString() ?? 'Normal',
               color: const Color(0xFFB71C1C),
-              statusColor: _getStatusColor(sensorData['kategori_cahaya']?.toString() ?? 'Normal'),
-              description: _getStatusDescription('kecerahan', sensorData['kategori_cahaya']?.toString() ?? 'Normal'),
+              statusColor: _getStatusColor(
+                  sensorData['kategori_cahaya']?.toString() ?? 'Normal'),
+              description: _getStatusDescription('kecerahan',
+                  sensorData['kategori_cahaya']?.toString() ?? 'Normal'),
               isDarkMode: isDarkMode,
             ),
           ],
@@ -883,6 +882,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 statusColor: actuatorData['pump'] ? Colors.green : Colors.red,
                 mode: actuatorData['autoMode'] ? 'Auto' : 'Manual',
                 isDarkMode: isDarkMode,
+                iconColor: Colors.blue,
               ),
               const SizedBox(width: 12),
               _buildActuatorItem(
@@ -892,15 +892,20 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 statusColor: actuatorData['light'] ? Colors.green : Colors.red,
                 mode: actuatorData['autoMode'] ? 'Auto' : 'Manual',
                 isDarkMode: isDarkMode,
+                iconColor: Colors.yellow,
               ),
               const SizedBox(width: 12),
               _buildActuatorItem(
-                icon: actuatorData['autoMode'] ? Icons.auto_mode : Icons.engineering,
+                icon: actuatorData['autoMode']
+                    ? Icons.auto_mode
+                    : Icons.engineering,
                 title: 'Mode Sistem',
                 status: actuatorData['autoMode'] ? 'Auto' : 'Manual',
-                statusColor: actuatorData['autoMode'] ? Colors.blue : Colors.orange,
+                statusColor:
+                    actuatorData['autoMode'] ? Colors.blue : Colors.orange,
                 mode: 'Aktif',
                 isDarkMode: isDarkMode,
+                iconColor: Colors.green,
               ),
             ],
           ),
@@ -921,9 +926,9 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
-                    actuatorData['autoMode'] 
-                      ? 'Sistem berjalan otomatis berdasarkan kondisi sensor'
-                      : 'Kontrol manual aktif - Anda dapat mengontrol di halaman Kontrol',
+                    actuatorData['autoMode']
+                        ? 'Sistem berjalan otomatis berdasarkan kondisi sensor'
+                        : 'Kontrol manual aktif - Anda dapat mengontrol di halaman Kontrol',
                     style: const TextStyle(
                       fontSize: 12,
                       color: Colors.white70,
@@ -945,6 +950,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
     required Color statusColor,
     required String mode,
     required bool isDarkMode,
+    Color? iconColor,
   }) {
     return Expanded(
       child: Container(
@@ -968,11 +974,10 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 color: isDarkMode ? Colors.grey[700] : Colors.grey[200],
                 shape: BoxShape.circle,
               ),
-              child: Icon(
-                icon, 
-                color: isDarkMode ? Colors.white : Colors.grey[700], 
-                size: 24
-              ),
+              child: Icon(icon,
+                  color: iconColor ??
+                      (isDarkMode ? Colors.white : Colors.grey[700]),
+                  size: 24),
             ),
             const SizedBox(height: 8),
             Text(
@@ -1022,7 +1027,8 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
         color: isDarkMode ? Colors.grey[900] : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : Colors.grey.withOpacity(0.2)),
+            color:
+                isDarkMode ? Colors.grey[800]! : Colors.grey.withOpacity(0.2)),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
@@ -1036,10 +1042,8 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
         children: [
           Row(
             children: [
-              Icon(
-                Icons.trending_up, 
-                color: isDarkMode ? Colors.blue[200] : Colors.blue
-              ),
+              Icon(Icons.trending_up,
+                  color: isDarkMode ? Colors.blue[200] : Colors.blue),
               const SizedBox(width: 8),
               Text(
                 '📈 Trend Data Sensor',
@@ -1057,7 +1061,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               data: temperatureData,
               title: 'Suhu (°C)',
               color: const Color(0xFF006B5D),
-              dataType: 'temperature', 
+              dataType: 'temperature',
             ),
           if (temperatureData.isNotEmpty) const SizedBox(height: 16),
           if (humidityData.isNotEmpty)
@@ -1065,7 +1069,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               data: humidityData,
               title: 'Kelembaban Udara (%)',
               color: const Color(0xFFB8860B),
-              dataType: 'humidity', 
+              dataType: 'humidity',
             ),
           if (humidityData.isNotEmpty) const SizedBox(height: 16),
           if (soilMoistureData.isNotEmpty)
@@ -1073,102 +1077,23 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               data: soilMoistureData,
               title: 'Kelembaban Tanah (%)',
               color: const Color(0xFF558B2F),
-              dataType: 'soilMoisture', 
+              dataType: 'soilMoisture',
             ),
-          if (temperatureData.isEmpty && humidityData.isEmpty && soilMoistureData.isEmpty)
+          if (temperatureData.isEmpty &&
+              humidityData.isEmpty &&
+              soilMoistureData.isEmpty)
             Container(
               height: 100,
               alignment: Alignment.center,
               child: Text(
                 'Menunggu data sensor...',
                 style: TextStyle(
-                  color: isDarkMode ? Colors.white.withOpacity(0.5) : Colors.grey[500],
+                  color: isDarkMode
+                      ? Colors.white.withOpacity(0.5)
+                      : Colors.grey[500],
                 ),
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildQuickActions(bool isDarkMode) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: isDarkMode ? Colors.grey[900] : Colors.white,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(
-          color: isDarkMode ? Colors.grey[800]! : Colors.grey.withOpacity(0.2)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Icon(
-                Icons.flash_on, 
-                color: isDarkMode ? Colors.orange[200] : Colors.orange
-              ),
-              const SizedBox(width: 8),
-              Text(
-                'Akses Cepat',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: isDarkMode ? Colors.orange[200] : Colors.orange,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildQuickActionItem(
-                icon: Icons.control_camera,
-                title: 'Kontrol',
-                color: isDarkMode ? Colors.green[300]! : Colors.green,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const ControlScreen()),
-                  );
-                },
-                isDarkMode: isDarkMode,
-              ),
-              _buildQuickActionItem(
-                icon: Icons.history,
-                title: 'Riwayat',
-                color: isDarkMode ? Colors.blue[300]! : Colors.blue,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const HistoryScreen()),
-                  );
-                },
-                isDarkMode: isDarkMode,
-              ),
-              _buildQuickActionItem(
-                icon: Icons.settings,
-                title: 'Pengaturan',
-                color: isDarkMode ? Colors.orange[300]! : Colors.orange,
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                  );
-                },
-                isDarkMode: isDarkMode,
-              ),
-            ],
-          ),
         ],
       ),
     );
@@ -1188,9 +1113,8 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: isDarkMode 
-                  ? color.withOpacity(0.2)
-                  : color.withOpacity(0.1),
+              color:
+                  isDarkMode ? color.withOpacity(0.2) : color.withOpacity(0.1),
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -1200,11 +1124,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 ),
               ],
             ),
-            child: Icon(
-              icon, 
-              color: color, 
-              size: 24
-            ),
+            child: Icon(icon, color: color, size: 24),
           ),
           const SizedBox(height: 8),
           Text(
@@ -1213,6 +1133,85 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               fontSize: 12,
               fontWeight: FontWeight.w500,
               color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLandInfoCard(bool isDarkMode) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: isDarkMode ? Colors.grey[900] : Colors.white,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(
+          color: isDarkMode ? Colors.grey[800]! : Colors.grey.withOpacity(0.2),
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(Icons.landscape,
+                  color: isDarkMode ? Colors.green[200] : Colors.green),
+              const SizedBox(width: 8),
+              Text(
+                'Info Lahan',
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.green[200] : Colors.green,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              const Icon(Icons.edit_location, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(
+                'Nama Lahan: Lahan Contoh',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              const Icon(Icons.location_on, color: Colors.grey),
+              const SizedBox(width: 8),
+              Text(
+                'Lokasi: Desa Contoh, Kecamatan Contoh',
+                style: TextStyle(
+                  fontSize: 16,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          SizedBox(
+            height: 250,
+            width: double.infinity,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(12),
+              child: Image.asset(
+                'images/maps.png', 
+              ),
             ),
           ),
         ],
