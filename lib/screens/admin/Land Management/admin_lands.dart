@@ -76,7 +76,7 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
         node['owner'].toLowerCase().contains(_searchQuery) ||
         node['location'].toLowerCase().contains(_searchQuery)
       ).toList();
-    });
+    }); 
   }
 
   void _showAddNodeDialog() {

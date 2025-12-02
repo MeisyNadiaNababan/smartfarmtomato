@@ -98,7 +98,7 @@ class _SignInScreenState extends State<SignInScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 20),
+                const SizedBox(height: 100),
 
                 // 🔙 Back Button
                 Align(
@@ -114,7 +114,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 // 🍅 Logo
                 Image.asset(
                   'images/tomato.png',
-                  height: 300,
+                  height: 250,
                 ),
 
                 const SizedBox(height: 20),

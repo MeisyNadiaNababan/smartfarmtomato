@@ -358,7 +358,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<List<AdminNotificationItem>>(
+            child: StreamBuilder<List<NotificationItem>>(
               stream: _notificationsEnabled 
                   ? AdminNotificationService.getNotifications()
                   : Stream.value([]),
@@ -409,7 +409,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildNotificationItem(AdminNotificationItem notification) {
+  Widget _buildNotificationItem(NotificationItem notification) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     
     return Container(

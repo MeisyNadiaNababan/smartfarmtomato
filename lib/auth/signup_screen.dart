@@ -127,7 +127,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
 
-                  Image.asset('images/tomato.png', height: 300),
+                  Image.asset('images/tomato.png', height: 250),
                   const SizedBox(height: 10),
 
                   const Text(
@@ -197,30 +197,60 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                   const SizedBox(height: 30),
 
-                  GestureDetector(
-                    onTap: _isLoading ? null : _signUp,
-                    child: Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      decoration: BoxDecoration(
-                        color: Colors.red.shade800,
+                  // GestureDetector(
+                  //   onTap: _isLoading ? null : _signUp,
+                  //   child: Container(
+                  //     width: double.infinity,
+                  //     padding: const EdgeInsets.symmetric(vertical: 15),
+                  //     decoration: BoxDecoration(
+                  //       color: Colors.red.shade800,
+                  //       borderRadius: BorderRadius.circular(30),
+                  //     ),
+                  //     child: Center(
+                  //       child: _isLoading
+                  //           ? const CircularProgressIndicator(color: Colors.white)
+                  //           : const Text(
+                  //               "Daftar Akun",
+                  //               style: TextStyle(
+                  //                   color: Colors.white,
+                  //                   fontSize: 18,
+                  //                   fontWeight: FontWeight.bold),
+                  //             ),
+                  //     ),
+                  //   ),
+                  // ),
+
+                  // const SizedBox(height: 20),
+                                  
+            
+            // 🔥 Login Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 48,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _signUp,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red.shade800,
+                      shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(30),
                       ),
-                      child: Center(
-                        child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text(
-                                "Daftar Akun",
-                                style: TextStyle(
-                                    color: Colors.white,
-                                    fontSize: 18,
-                                    fontWeight: FontWeight.bold),
-                              ),
-                      ),
                     ),
+                    child: _isLoading
+                        ? const CircularProgressIndicator(
+                            strokeWidth: 2,
+                            color: Colors.white,
+                          )
+                        : const Text(
+                            "Daftar Akun",
+                            style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white),
+                          ),
                   ),
+                ),
 
-                  const SizedBox(height: 20),
+                const SizedBox(height: 20),
 
                   RichText(
                     text: TextSpan(
