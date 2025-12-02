@@ -110,7 +110,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       body: Form(
         key: _formKey,
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 30),
+          padding: const EdgeInsets.symmetric(horizontal: 28),
           child: Center(
             child: SingleChildScrollView(
               child: Column(
@@ -125,8 +125,8 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
                   ),
 
-                  Image.asset('images/tomato.png', height: 160),
-                  const SizedBox(height: 20),
+                  Image.asset('images/tomato.png', height: 300),
+                  const SizedBox(height: 10),
 
                   const Text(
                     "Daftar TomaFarm",
@@ -139,12 +139,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
 
                   const SizedBox(height: 6),
                   const Text(
-                    "Masuk untuk melanjutkan aplikasi TomaFarm",
+                    "Daftar untuk melanjutkan aplikasi TomaFarm",
                     style: TextStyle(color: Colors.black54),
                     textAlign: TextAlign.center,
                   ),
 
-                  const SizedBox(height: 25),
+                  const SizedBox(height: 30),
 
                   _buildTextField(
                     controller: _emailController,

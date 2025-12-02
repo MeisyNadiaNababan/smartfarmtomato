@@ -114,7 +114,7 @@ class _SignInScreenState extends State<SignInScreen> {
                 // 🍅 Logo
                 Image.asset(
                   'images/tomato.png',
-                  height: 160,
+                  height: 300,
                 ),
 
                 const SizedBox(height: 20),
