@@ -1,4 +1,4 @@
-// ignore_for_file: unused_field
+// ignore_for_file: undefined_class, unused_field
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +48,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     final user = _auth.currentUser;
     if (user != null) {
       // Cek nama di Firebase Realtime Database
-      _databaseRef.child('users').child(user.uid).child('name').onValue.listen((event) {
+      _databaseRef
+          .child('users')
+          .child(user.uid)
+          .child('name')
+          .onValue
+          .listen((event) {
         final nameFromDB = event.snapshot.value;
         if (nameFromDB != null && nameFromDB is String) {
           setState(() {
@@ -59,7 +64,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final email = user.email ?? '';
           final nameFromEmail = email.split('@').first;
           setState(() {
-            _userName = nameFromEmail.isNotEmpty 
+            _userName = nameFromEmail.isNotEmpty
                 ? nameFromEmail[0].toUpperCase() + nameFromEmail.substring(1)
                 : 'Petani';
           });
@@ -100,7 +105,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showEditNameDialog() {
-    final TextEditingController nameController = TextEditingController(text: _userName);
+    final TextEditingController nameController =
+        TextEditingController(text: _userName);
 
     showDialog(
       context: context,
@@ -285,17 +291,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ),
               ),
               const SizedBox(height: 8),
-              _buildFeatureItem('📊 Monitoring real-time sensor', isDarkMode, context),
-              _buildFeatureItem('💧 Kontrol otomatis pompa air', isDarkMode, context),
+              _buildFeatureItem(
+                  '📊 Monitoring real-time sensor', isDarkMode, context),
+              _buildFeatureItem(
+                  '💧 Kontrol otomatis pompa air', isDarkMode, context),
               _buildFeatureItem('💡 Kontrol lampu tumbuh', isDarkMode, context),
-              _buildFeatureItem('📈 Riwayat data dan grafik', isDarkMode, context),
+              _buildFeatureItem(
+                  '📈 Riwayat data dan grafik', isDarkMode, context),
               _buildFeatureItem('🔔 Notifikasi cerdas', isDarkMode, context),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isDarkMode
-                      ? Theme.of(context).colorScheme.surfaceContainerHighest
+                      ? Theme.of(context).colorScheme.surfaceVariant
                       : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -560,9 +569,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  _userName.isNotEmpty 
-                                      ? _userName 
-                                      : user?.email?.split('@').first ?? 'Petani TomaFarm',
+                                  _userName.isNotEmpty
+                                      ? _userName
+                                      : user?.email?.split('@').first ??
+                                          'Petani TomaFarm',
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,
@@ -669,7 +679,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: Switch(
                         value: _notificationsEnabled,
                         onChanged: _toggleNotifications,
-                        activeThumbColor: _primaryColor,
+                        activeColor: _primaryColor,
                         activeTrackColor: _primaryColor.withOpacity(0.3),
                       ),
                     ),
@@ -687,7 +697,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               _showSnackBar(
                                   'Mode gelap ${value ? 'diaktifkan' : 'dinonaktifkan'}');
                             },
-                            activeThumbColor: _blueColor,
+                            activeColor: _blueColor,
                             activeTrackColor: _blueColor.withOpacity(0.3),
                           );
                         },
@@ -701,7 +711,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: Switch(
                         value: _autoRefreshEnabled,
                         onChanged: _toggleAutoRefresh,
-                        activeThumbColor: _secondaryColor,
+                        activeColor: _secondaryColor,
                         activeTrackColor: _secondaryColor.withOpacity(0.3),
                       ),
                     ),

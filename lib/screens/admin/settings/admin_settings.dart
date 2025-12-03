@@ -1,4 +1,4 @@
-// ignore_for_file: unused_field, unused_local_variable
+// ignore_for_file: unused_field, unused_local_variable, undefined_class
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -48,7 +48,12 @@ class _SettingsScreenState extends State<AdminSettingsScreen> {
     final user = _auth.currentUser;
     if (user != null) {
       // Cek nama di Firebase Realtime Database
-      _databaseRef.child('users').child(user.uid).child('name').onValue.listen((event) {
+      _databaseRef
+          .child('users')
+          .child(user.uid)
+          .child('name')
+          .onValue
+          .listen((event) {
         final nameFromDB = event.snapshot.value;
         if (nameFromDB != null && nameFromDB is String) {
           setState(() {
@@ -59,7 +64,7 @@ class _SettingsScreenState extends State<AdminSettingsScreen> {
           final email = user.email ?? '';
           final nameFromEmail = email.split('@').first;
           setState(() {
-            _userName = nameFromEmail.isNotEmpty 
+            _userName = nameFromEmail.isNotEmpty
                 ? nameFromEmail[0].toUpperCase() + nameFromEmail.substring(1)
                 : 'Pengguna';
           });
@@ -100,7 +105,8 @@ class _SettingsScreenState extends State<AdminSettingsScreen> {
   }
 
   void _showEditNameDialog() {
-    final TextEditingController nameController = TextEditingController(text: _userName);
+    final TextEditingController nameController =
+        TextEditingController(text: _userName);
 
     showDialog(
       context: context,
@@ -540,9 +546,10 @@ class _SettingsScreenState extends State<AdminSettingsScreen> {
                             children: [
                               Expanded(
                                 child: Text(
-                                  _userName.isNotEmpty 
-                                      ? _userName 
-                                      : user?.email?.split('@').first ?? 'Pengguna TomaFarm',
+                                  _userName.isNotEmpty
+                                      ? _userName
+                                      : user?.email?.split('@').first ??
+                                          'Pengguna TomaFarm',
                                   style: const TextStyle(
                                     fontSize: 18,
                                     fontWeight: FontWeight.bold,

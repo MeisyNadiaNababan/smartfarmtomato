@@ -26,6 +26,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final Color _teal = const Color(0xFF00695C);
   final Color _lightGreen = const Color(0xFF4CAF50);
   final Color _gray = const Color(0xFF757575);
+  final Color _burgundy = const Color(0xFF8B2F3C);
+  final Color _darkBrown = const Color(0xFF6B4423);
+  final Color _purple = const Color(0xFF6A1B9A);
   
   @override
   void initState() {
@@ -39,7 +42,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       _handleRealtimeData(event.snapshot.value);
     });
 
-    // Load history data
+    // Load history data dari history_data
     _loadHistoryData();
   }
 
@@ -57,6 +60,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
       _hasError = false;
     });
 
+    // Ambil data dari history_data
     _databaseRef.child('history_data')
       .orderByKey()
       .limitToLast(100)
@@ -91,15 +95,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
     });
   }
 
-  // PERBAIKAN FUNGSI PARSING TIMESTAMP
   int _parseTimestamp(Map<dynamic, dynamic> data, String key) {
     // 1. Coba dari timestamp field langsung (dalam milliseconds)
     if (data['timestamp'] != null) {
       final ts = data['timestamp'];
       if (ts is int) {
-        // PERBAIKAN: Jangan ubah tahun jika timestamp valid
         final date = DateTime.fromMillisecondsSinceEpoch(ts);
-        // Cek apakah tanggal valid (setelah tahun 2020)
         if (date.year > 2020) {
           return ts;
         }
@@ -134,14 +135,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
         if (part.length >= 10) {
           final possibleTimestamp = int.tryParse(part);
           if (possibleTimestamp != null) {
-            // Jika timestamp dalam detik (10 digit), konversi ke milidetik
-            if (possibleTimestamp < 10000000000) { // Kurang dari 10 digit
+            if (possibleTimestamp < 10000000000) {
               final milliseconds = possibleTimestamp * 1000;
               final date = DateTime.fromMillisecondsSinceEpoch(milliseconds);
               if (date.year > 2020) {
                 return milliseconds;
               }
-            } else { // Jika sudah dalam milidetik (13 digit)
+            } else {
               final date = DateTime.fromMillisecondsSinceEpoch(possibleTimestamp);
               if (date.year > 2020) {
                 return possibleTimestamp;
@@ -154,16 +154,15 @@ class _HistoryScreenState extends State<HistoryScreen> {
       print('Error parsing timestamp from key: $e');
     }
 
-    // 4. Fallback: Gunakan waktu sekarang (jangan paksa tahun 2025)
+    // 4. Fallback: Gunakan waktu sekarang
     final now = DateTime.now();
-    print('⚠ Using current time for entry: $key');
+    print('⚠️ Using current time for entry: $key');
     return now.millisecondsSinceEpoch;
   }
 
   LogEntry _createLogEntry(String id, Map<dynamic, dynamic> data, int timestamp) {
     final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
     
-    // Debug: Tampilkan tanggal yang diparsing
     print('📅 Created entry: ${date.toString()} for id: $id');
     
     return LogEntry(
@@ -196,48 +195,120 @@ class _HistoryScreenState extends State<HistoryScreen> {
     _loadHistoryData();
   }
 
+  // Fungsi untuk mendapatkan waktu berdasarkan jam
+  String _getTimeOfDayLabel(DateTime date) {
+    final hour = date.hour;
+    if (hour >= 5 && hour < 11) {
+      return 'Pagi';
+    } else if (hour >= 11 && hour < 15) {
+      return 'Siang';
+    } else if (hour >= 15 && hour < 18) {
+      return 'Sore';
+    } else {
+      return 'Malam';
+    }
+  }
+
+  // Fungsi untuk mendapatkan warna berdasarkan waktu
+  Color _getTimeOfDayColor(DateTime date) {
+    final hour = date.hour;
+    if (hour >= 5 && hour < 11) {
+      return _teal; // Pagi
+    } else if (hour >= 11 && hour < 15) {
+      return _darkBrown; // Siang
+    } else if (hour >= 15 && hour < 18) {
+      return _purple; // Sore
+    } else {
+      return _darkGreen; // Malam
+    }
+  }
+
   // Hitung statistik
   int get _totalData => _logs.length;
-  int get _drySoilCount => _logs.where((log) => 
-    log.soilCategory == 'SANGAT KERING' || log.soilCategory == 'KERING').length;
-  int get _pumpOnCount => _logs.where((log) => log.pumpStatus == 'ON').length;
-  int get _autoModeCount => _logs.where((log) => log.operationMode == 'AUTO').length;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Colors.grey.shade50,
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Hanya tombol refresh di pojok kanan
-              Align(
-                alignment: Alignment.centerRight,
-                child: IconButton(
-                  onPressed: _refreshData,
-                  icon: Icon(Icons.refresh, color: _darkGreen),
-                ),
+              // Header Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Riwayat Monitoring',
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: _darkGreen,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Pantau Perkembangan Tanaman',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: _gray,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    onPressed: _refreshData,
+                    icon: Icon(Icons.refresh, color: _darkGreen, size: 24),
+                  ),
+                ],
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 16),
               
               // Realtime Data Card
               if (_realtimeData != null) _buildRealtimeCard(),
               const SizedBox(height: 16),
 
-              // Summary Statistics Grid
-              _buildSummaryGrid(),
-              const SizedBox(height: 16),
-
-              // History List
-              Text(
-                'Riwayat Monitoring',
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: _darkGreen,
+              // History Header
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _burgundy,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(Icons.history, color: Colors.white, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Riwayat Monitoring',
+                      style: TextStyle(
+                        fontSize: 14,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const Spacer(),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      child: Text(
+                        'Total: $_totalData',
+                        style: TextStyle(
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ),
               const SizedBox(height: 12),
@@ -263,12 +334,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
     final log = _realtimeData!;
     final date = DateTime.fromMillisecondsSinceEpoch(log.timestamp);
     final timeFormat = DateFormat('HH:mm:ss');
+    final dateFormat = DateFormat('yyyy/MM/dd');
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: _darkGreen,
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
@@ -280,22 +352,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header dengan tanggal di kanan atas
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Icon(Icons.access_time, color: Colors.white, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'SmartFarm Tomat - REALTIME',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+              Text(
+                'SmartFarm Tomat - REALTIME',
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
                 ),
               ),
               Text(
-                DateFormat('yyyy/MM/dd').format(date),
+                dateFormat.format(date),
                 style: TextStyle(
                   color: Colors.white70,
                   fontSize: 12,
@@ -305,106 +375,92 @@ class _HistoryScreenState extends State<HistoryScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            '🌱 Sistem Siap | ${log.plantStage} | Hari ke-${log.plantAge ?? 1}',
+            'Tahapan: ${log.plantStage} | Hari ke-${log.plantAge ?? 1}',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 13,
+              color: Colors.white70,
+              fontSize: 12,
             ),
           ),
           const SizedBox(height: 12),
           
-          // Data Real-Time section
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: _red,
-              borderRadius: BorderRadius.circular(8),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  'Data Real-Time:',
+          // Current Data Section
+          Row(
+            children: [
+              Text(
+                'Current Data',
+                style: TextStyle(
+                  color: Colors.white,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+              const Spacer(),
+              // Data realtime di pojok kanan
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.15),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Text(
+                  timeFormat.format(date),
                   style: TextStyle(
                     color: Colors.white,
-                    fontSize: 14,
+                    fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildRealtimeDataItem('${log.temperature?.toStringAsFixed(1) ?? '-'}°C'),
-                      _buildRealtimeDataItem('${log.humidity?.toStringAsFixed(1) ?? '-'}%'),
-                      _buildRealtimeDataItem('${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%'),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
           const SizedBox(height: 12),
+          
+          // Sensor data dalam badge
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _buildRealtimeBadge('🌡️', '${log.temperature?.toStringAsFixed(1) ?? '-'}°C'),
+              _buildRealtimeBadge('💧', '${log.humidity?.toStringAsFixed(1) ?? '-'}%'),
+              _buildRealtimeBadge('🌱', '${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%'),
+              _buildRealtimeBadge('💡', '${log.brightness?.toStringAsFixed(1) ?? '-'}%'),
+            ],
+          ),
+          const SizedBox(height: 12),
+          
+          // Status pompa dan tanah (tanpa keterangan waktu)
+          Row(
             children: [
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: log.pumpStatus == 'ON' ? Colors.green : Colors.grey,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      log.pumpStatus == 'ON' ? Icons.water_drop : Icons.water_drop_outlined,
-                      color: log.pumpStatus == 'ON' ? Colors.greenAccent : Colors.white70,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Pompa: ${log.pumpStatus}',
-                      style: TextStyle(
-                        color: log.pumpStatus == 'ON' ? Colors.greenAccent : Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
+                child: Text(
+                  'Pompa: ${log.pumpStatus}',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
+              const SizedBox(width: 8),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: log.soilCategory == 'SANGAT KERING' || log.soilCategory == 'KERING' 
+                      ? Colors.red 
+                      : Colors.grey,
                   borderRadius: BorderRadius.circular(8),
                 ),
-                child: Row(
-                  children: [
-                    Icon(
-                      log.operationMode == 'AUTO' ? Icons.auto_awesome : Icons.settings,
-                      color: log.operationMode == 'AUTO' ? Colors.blueAccent : Colors.orangeAccent,
-                      size: 16,
-                    ),
-                    const SizedBox(width: 4),
-                    Text(
-                      'Mode: ${log.operationMode}',
-                      style: TextStyle(
-                        color: log.operationMode == 'AUTO' ? Colors.blueAccent : Colors.orangeAccent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Text(
-                timeFormat.format(date),
-                style: TextStyle(
-                  color: Colors.white70,
-                  fontSize: 14,
-                  fontWeight: FontWeight.bold,
+                child: Text(
+                  'Tanah: ${log.soilCategory ?? '-'}',
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
                 ),
               ),
             ],
@@ -414,65 +470,30 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildRealtimeDataItem(String value) {
-    return Text(
-      value,
-      style: TextStyle(
-        color: Colors.white,
-        fontSize: 16,
-        fontWeight: FontWeight.bold,
-      ),
-    );
-  }
-
-  Widget _buildSummaryGrid() {
+  Widget _buildRealtimeBadge(String icon, String value) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: _lightGreen.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: _lightGreen.withOpacity(0.3)),
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _buildSummaryItem('Total Data', _totalData.toString(), Icons.list, _darkGreen),
-          _buildSummaryItem('Pompa ON', _pumpOnCount.toString(), Icons.water_drop, _blue),
-          _buildSummaryItem('Tanah Kering', _drySoilCount.toString(), Icons.grass, _orange),
-          _buildSummaryItem('Auto Mode', _autoModeCount.toString(), Icons.smart_toy, _teal),
+          Text(
+            icon,
+            style: TextStyle(fontSize: 14),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
         ],
       ),
-    );
-  }
-
-  Widget _buildSummaryItem(String title, String value, IconData icon, Color color) {
-    return Column(
-      children: [
-        Container(
-          padding: const EdgeInsets.all(8),
-          decoration: BoxDecoration(
-            color: color.withOpacity(0.1),
-            shape: BoxShape.circle,
-          ),
-          child: Icon(icon, size: 20, color: color),
-        ),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 18,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-        Text(
-          title,
-          style: TextStyle(
-            fontSize: 10,
-            color: _gray,
-          ),
-        ),
-      ],
     );
   }
 
@@ -489,20 +510,20 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget _buildHistoryItem(LogEntry log) {
     final date = DateTime.fromMillisecondsSinceEpoch(log.timestamp);
     final timeFormat = DateFormat('HH:mm:ss');
+    final dateFormat = DateFormat('yyyy/MM/dd');
     
-    // Format untuk header
-    final headerDateFormat = DateFormat('yyyy/MM/dd');
-    final headerDate = headerDateFormat.format(date);
+    // Tentukan waktu dan warna
+    final timeOfDayLabel = _getTimeOfDayLabel(date);
+    final cardColor = _getTimeOfDayColor(date);
 
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.grey.shade200),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withOpacity(0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
@@ -511,99 +532,96 @@ class _HistoryScreenState extends State<HistoryScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header dengan Mode dan tanggal
+          // Header dengan mode dan waktu di pojok kanan
           Row(
             children: [
+              // Icon mode
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: log.operationMode == 'AUTO' ? _blue.withOpacity(0.1) : _orange.withOpacity(0.1),
-                  borderRadius: BorderRadius.circular(6),
+                  color: Colors.white.withOpacity(0.2),
+                  shape: BoxShape.circle,
                 ),
-                child: Text(
-                  'Mode: ${log.operationMode}',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                    color: log.operationMode == 'AUTO' ? _blue : _orange,
-                  ),
+                child: Icon(
+                  log.operationMode == 'AUTO' ? Icons.auto_awesome : Icons.settings,
+                  color: Colors.white,
+                  size: 20,
                 ),
               ),
-              if (log.timeOfDay != null) ...[
-                const SizedBox(width: 8),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: _gray.withOpacity(0.1),
-                    borderRadius: BorderRadius.circular(6),
-                  ),
-                  child: Text(
-                    log.timeOfDay!,
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Mode: ${log.operationMode} - $timeOfDayLabel',
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${log.pumpStatus == 'ON' ? 'Pompa: ON' : 'Pompa: OFF'}  Tanah: ${log.soilCategory ?? '-'}',
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Colors.white70,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    timeFormat.format(date),
                     style: TextStyle(
-                      fontSize: 10,
-                      color: _gray,
+                      color: Colors.white,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                ),
-              ],
-              const Spacer(),
-              Text(
-                headerDate,
-                style: TextStyle(
-                  color: _gray,
-                  fontSize: 12,
-                ),
+                  Text(
+                    dateFormat.format(date),
+                    style: TextStyle(
+                      color: Colors.white70,
+                      fontSize: 10,
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: 12),
           
-          Text(
-            '🌱 ${log.plantStage} | Hari ke-${log.plantAge ?? 1}',
-            style: TextStyle(
-              fontSize: 12,
-              color: _darkGreen,
-              fontWeight: FontWeight.w500,
+          // Plant stage badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.2),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: Text(
+              '${log.plantStage}',
+              style: TextStyle(
+                fontSize: 11,
+                color: Colors.white,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ),
           const SizedBox(height: 12),
           
-          // Data sensor dalam row
+          // Sensor data badges
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildSensorItem('🌡️', '${log.temperature?.toStringAsFixed(1) ?? '-'}°C', _red),
-              _buildSensorItem('💧', '${log.humidity?.toStringAsFixed(0) ?? '-'}%', _blue),
-              _buildSensorItem('🌱', '${log.soilMoisture?.toStringAsFixed(0) ?? '-'}%', _darkGreen),
-              _buildSensorItem('💡', '${log.brightness?.toStringAsFixed(1) ?? '-'}%', _orange),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
-          // Status bar
-          Row(
-            children: [
-              _buildStatusChip(
-                'Pompa: ${log.pumpStatus}',
-                log.pumpStatus == 'ON',
-                log.pumpStatus == 'ON' ? Colors.green : Colors.grey,
-              ),
-              const SizedBox(width: 8),
-              if (log.soilCategory != null) 
-                _buildStatusChip(
-                  'Tanah: ${log.soilCategory}',
-                  false,
-                  _getSoilColor(log.soilCategory!),
-                ),
-              const Spacer(),
-              Text(
-                timeFormat.format(date),
-                style: TextStyle(
-                  color: _gray,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              _buildSensorBadge('🌡️', '${log.temperature?.toStringAsFixed(1) ?? '-'}°C'),
+              _buildSensorBadge('💧', '${log.humidity?.toStringAsFixed(1) ?? '-'}%'),
+              _buildSensorBadge('🌱', '${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%'),
+              _buildSensorBadge('💡', '${log.brightness?.toStringAsFixed(1) ?? '-'}%'),
             ],
           ),
         ],
@@ -611,55 +629,28 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildSensorItem(String emoji, String value, Color color) {
-    return Column(
-      children: [
-        Text(emoji, style: const TextStyle(fontSize: 20)),
-        const SizedBox(height: 4),
-        Text(
-          value,
-          style: TextStyle(
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-            color: color,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildStatusChip(String text, bool isActive, Color color) {
+  Widget _buildSensorBadge(String icon, String value) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(6),
-        border: Border.all(color: color.withOpacity(0.3)),
+        color: Colors.white.withOpacity(0.2),
+        borderRadius: BorderRadius.circular(16),
       ),
-      child: Text(
-        text,
-        style: TextStyle(
-          fontSize: 10,
-          color: color,
-          fontWeight: FontWeight.w500,
-        ),
+      child: Row(
+        children: [
+          Text(icon, style: TextStyle(fontSize: 14)),
+          const SizedBox(width: 4),
+          Text(
+            value,
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
-  }
-
-  Color _getSoilColor(String soilCategory) {
-    switch (soilCategory) {
-      case 'SANGAT KERING':
-        return _red;
-      case 'KERING':
-        return _orange;
-      case 'LEMBAB':
-        return _lightGreen;
-      case 'BASAH':
-        return _blue;
-      default:
-        return _gray;
-    }
   }
 
   Widget _buildLoadingState() {
