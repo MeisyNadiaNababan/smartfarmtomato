@@ -396,13 +396,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
           Expanded(
-<<<<<<< HEAD
             child: StreamBuilder<List<NotificationItem>>(
-              stream: _notificationsEnabled 
-=======
-            child: StreamBuilder<List<AdminNotificationItem>>(
               stream: _notificationsEnabled
->>>>>>> 9aedf9c6d56553ac9e235a61d18ea3d7ed3bea83
                   ? AdminNotificationService.getNotifications()
                   : Stream.value([]),
               builder: (context, snapshot) {
