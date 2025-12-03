@@ -1,3 +1,4 @@
+// ignore_for_file: unused_field
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
@@ -294,7 +295,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   color: isDarkMode
-                      ? Theme.of(context).colorScheme.surfaceVariant
+                      ? Theme.of(context).colorScheme.surfaceContainerHighest
                       : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -668,7 +669,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: Switch(
                         value: _notificationsEnabled,
                         onChanged: _toggleNotifications,
-                        activeColor: _primaryColor,
+                        activeThumbColor: _primaryColor,
                         activeTrackColor: _primaryColor.withOpacity(0.3),
                       ),
                     ),
@@ -686,7 +687,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               _showSnackBar(
                                   'Mode gelap ${value ? 'diaktifkan' : 'dinonaktifkan'}');
                             },
-                            activeColor: _blueColor,
+                            activeThumbColor: _blueColor,
                             activeTrackColor: _blueColor.withOpacity(0.3),
                           );
                         },
@@ -700,7 +701,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       trailing: Switch(
                         value: _autoRefreshEnabled,
                         onChanged: _toggleAutoRefresh,
-                        activeColor: _secondaryColor,
+                        activeThumbColor: _secondaryColor,
                         activeTrackColor: _secondaryColor.withOpacity(0.3),
                       ),
                     ),

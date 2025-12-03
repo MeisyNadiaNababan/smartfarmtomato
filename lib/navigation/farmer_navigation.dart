@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../screens/farmer/dashboard/farmer_dashboard.dart';
@@ -26,7 +27,7 @@ class _FarmerNavigationState extends State<FarmerNavigation> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Scaffold(
       body: _screens[_currentIndex],
       bottomNavigationBar: BottomNavigationBar(
@@ -37,9 +38,12 @@ class _FarmerNavigationState extends State<FarmerNavigation> {
           });
         },
         type: BottomNavigationBarType.fixed,
-        backgroundColor: Theme.of(context).bottomNavigationBarTheme.backgroundColor,
-        selectedItemColor: Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
-        unselectedItemColor: Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
+        backgroundColor:
+            Theme.of(context).bottomNavigationBarTheme.backgroundColor,
+        selectedItemColor:
+            Theme.of(context).bottomNavigationBarTheme.selectedItemColor,
+        unselectedItemColor:
+            Theme.of(context).bottomNavigationBarTheme.unselectedItemColor,
         selectedLabelStyle: const TextStyle(fontWeight: FontWeight.bold),
         items: const [
           BottomNavigationBarItem(

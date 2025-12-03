@@ -1,3 +1,4 @@
+// ignore_for_file: undefined_class
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
@@ -54,9 +55,20 @@ class _ControlScreenState extends State<ControlScreen> {
     final isDarkMode = themeProvider.isDarkMode;
 
     return Scaffold(
-      backgroundColor: isDarkMode
-          ? Theme.of(context).colorScheme.background
-          : Colors.grey[100],
+      backgroundColor:
+          isDarkMode ? Theme.of(context).colorScheme.surface : Colors.grey[100],
+      // appBar: AppBar(
+      //   backgroundColor: Colors.white,
+      //   elevation: 0,
+      //   leading: IconButton(
+      //     icon: const Icon(Icons.arrow_back, color: Colors.black),
+      //     onPressed: () => Navigator.pop(context),
+      //   ),
+      //   title: const Text(
+      //     'Kontrol Akuator',
+      //     style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+      //   ),
+      // ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -66,10 +78,7 @@ class _ControlScreenState extends State<ControlScreen> {
               'Kontrol manual pompa air dan lampu tubuh',
               style: TextStyle(
                   color: isDarkMode
-                      ? Theme.of(context)
-                          .colorScheme
-                          .onBackground
-                          .withOpacity(0.6)
+                      ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6)
                       : Colors.grey,
                   fontSize: 14),
             ),
@@ -144,7 +153,7 @@ class _ControlScreenState extends State<ControlScreen> {
             onChanged: (value) {
               _toggleAutoMode();
             },
-            activeColor: Colors.green,
+            activeThumbColor: Colors.green,
             activeTrackColor: Colors.green[200],
           ),
         ],

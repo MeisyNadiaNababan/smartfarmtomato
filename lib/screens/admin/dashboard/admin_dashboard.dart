@@ -1,3 +1,4 @@
+// ignore_for_file: undefined_class, unused_field, unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
@@ -14,7 +15,7 @@ class AdminDashboardScreen extends StatefulWidget {
 
 class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref();
-  
+
   // Data statistik
   int _totalFarmers = 0;
   int _totalLands = 0;
@@ -22,7 +23,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   int _criticalAlerts = 0;
   int _totalHarvests = 0;
   double _averageYield = 0.0;
-  
+
   // Data sensor dari semua lahan
   Map<String, dynamic> _overallSensorData = {
     'temperature': 0.0,
@@ -41,11 +42,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   // Notifikasi
   int _unreadNotifications = 0;
   bool _notificationsEnabled = true;
-  
+
   // Data terbaru
   List<Map<String, dynamic>> _recentActivities = [];
   List<Map<String, dynamic>> _systemAlerts = [];
-  
+
   bool _isLoading = true;
 
   // Warna konsisten dengan dashboard lainnya
@@ -91,7 +92,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   void _loadStatistics() {
     // Total petani
-    _databaseRef.child('users').orderByChild('role').equalTo('farmer').onValue.listen((event) {
+    _databaseRef
+        .child('users')
+        .orderByChild('role')
+        .equalTo('farmer')
+        .onValue
+        .listen((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
       if (data != null) {
         setState(() {
@@ -106,17 +112,19 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       if (data != null) {
         setState(() {
           _totalLands = data.length;
-          _activeNodes = data.values.where((node) => 
-            node['status'] == 'online').length;
+          _activeNodes =
+              data.values.where((node) => node['status'] == 'online').length;
         });
       }
     });
 
     // Alert kritis
-    _databaseRef.child('alerts')
-      .orderByChild('severity')
-      .equalTo('high')
-      .onValue.listen((event) {
+    _databaseRef
+        .child('alerts')
+        .orderByChild('severity')
+        .equalTo('high')
+        .onValue
+        .listen((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
       if (data != null) {
         setState(() {
@@ -131,12 +139,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       if (data != null) {
         double totalYield = 0;
         int harvestCount = 0;
-        
+
         data.forEach((key, value) {
           totalYield += (value['yield'] ?? 0).toDouble();
           harvestCount++;
         });
-        
+
         setState(() {
           _totalHarvests = harvestCount;
           _averageYield = harvestCount > 0 ? totalYield / harvestCount : 0.0;
@@ -222,13 +230,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   void _loadSystemAlerts() {
-    _databaseRef.child('alerts')
-      .orderByChild('timestamp')
-      .limitToLast(5)
-      .onValue.listen((event) {
+    _databaseRef
+        .child('alerts')
+        .orderByChild('timestamp')
+        .limitToLast(5)
+        .onValue
+        .listen((event) {
       final data = event.snapshot.value as Map<dynamic, dynamic>?;
       final List<Map<String, dynamic>> alerts = [];
-      
+
       if (data != null) {
         data.forEach((key, value) {
           alerts.add({
@@ -240,7 +250,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             'timestamp': value['timestamp'],
           });
         });
-        
+
         setState(() {
           _systemAlerts = alerts.reversed.toList();
           _isLoading = false;
@@ -269,13 +279,29 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   String _getStatusMessage(String type, double value) {
     switch (type) {
       case 'temperature':
-        return value > 30 ? 'Panas' : value < 20 ? 'Dingin' : 'Optimal';
+        return value > 30
+            ? 'Panas'
+            : value < 20
+                ? 'Dingin'
+                : 'Optimal';
       case 'humidity':
-        return value > 80 ? 'Lembab' : value < 40 ? 'Kering' : 'Normal';
+        return value > 80
+            ? 'Lembab'
+            : value < 40
+                ? 'Kering'
+                : 'Normal';
       case 'soilMoisture':
-        return value < 30 ? 'Kering' : value > 70 ? 'Basah' : 'Optimal';
+        return value < 30
+            ? 'Kering'
+            : value > 70
+                ? 'Basah'
+                : 'Optimal';
       case 'lightIntensity':
-        return value > 800 ? 'Terang' : value < 300 ? 'Redup' : 'Cukup';
+        return value > 800
+            ? 'Terang'
+            : value < 300
+                ? 'Redup'
+                : 'Cukup';
       default:
         return 'Normal';
     }
@@ -284,11 +310,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   Color _getStatusColor(String type, double value) {
     switch (type) {
       case 'temperature':
-        return value > 30 ? Colors.orange : value < 20 ? Colors.blue : Colors.green;
+        return value > 30
+            ? Colors.orange
+            : value < 20
+                ? Colors.blue
+                : Colors.green;
       case 'humidity':
-        return value > 80 ? Colors.orange : value < 40 ? Colors.red : Colors.green;
+        return value > 80
+            ? Colors.orange
+            : value < 40
+                ? Colors.red
+                : Colors.green;
       case 'soilMoisture':
-        return value < 30 ? Colors.red : value > 70 ? Colors.blue : Colors.green;
+        return value < 30
+            ? Colors.red
+            : value > 70
+                ? Colors.blue
+                : Colors.green;
       case 'lightIntensity':
         return value < 300 ? Colors.orange : Colors.green;
       default:
@@ -307,7 +345,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildNotificationsSheet() {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: BoxDecoration(
@@ -358,8 +396,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ),
           ),
           Expanded(
+<<<<<<< HEAD
             child: StreamBuilder<List<NotificationItem>>(
               stream: _notificationsEnabled 
+=======
+            child: StreamBuilder<List<AdminNotificationItem>>(
+              stream: _notificationsEnabled
+>>>>>>> 9aedf9c6d56553ac9e235a61d18ea3d7ed3bea83
                   ? AdminNotificationService.getNotifications()
                   : Stream.value([]),
               builder: (context, snapshot) {
@@ -370,15 +413,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   );
                 }
-                
+
                 if (!snapshot.hasData || snapshot.data!.isEmpty) {
                   return Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(
-                          Icons.notifications_none, 
-                          size: 60, 
+                          Icons.notifications_none,
+                          size: 60,
                           color: Colors.grey,
                         ),
                         const SizedBox(height: 16),
@@ -392,7 +435,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     ),
                   );
                 }
-                
+
                 final notifications = snapshot.data!;
                 return ListView.builder(
                   itemCount: notifications.length,
@@ -411,17 +454,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Widget _buildNotificationItem(NotificationItem notification) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: notification.isRead 
+        color: notification.isRead
             ? Colors.grey[50]
             : _primaryColor.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: notification.isRead 
+          color: notification.isRead
               ? Colors.grey.withOpacity(0.2)
               : _primaryColor.withOpacity(0.3),
         ),
@@ -448,7 +491,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Text(
                   notification.title,
                   style: TextStyle(
-                    fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
+                    fontWeight: notification.isRead
+                        ? FontWeight.normal
+                        : FontWeight.bold,
                     fontSize: 14,
                     color: Colors.black87,
                   ),
@@ -457,7 +502,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Text(
                   notification.message,
                   style: TextStyle(
-                    fontSize: 12, 
+                    fontSize: 12,
                     color: Colors.black54,
                   ),
                 ),
@@ -465,7 +510,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Text(
                   notification.formattedTime,
                   style: TextStyle(
-                    fontSize: 10, 
+                    fontSize: 10,
                     color: Colors.grey,
                   ),
                 ),
@@ -489,7 +534,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
-    
+
     if (_isLoading) {
       return Scaffold(
         backgroundColor: Colors.white,
@@ -524,7 +569,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Text(
                 'Memuat dashboard...',
                 style: TextStyle(
-                  fontSize: 14, 
+                  fontSize: 14,
                   color: Colors.grey,
                 ),
               ),
@@ -611,7 +656,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       shape: BoxShape.circle,
                     ),
                     child: Icon(
-                      Icons.notifications, 
+                      Icons.notifications,
                       color: _primaryColor,
                     ),
                   ),
@@ -631,7 +676,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         minHeight: 16,
                       ),
                       child: Text(
-                        _unreadNotifications > 9 ? '9+' : _unreadNotifications.toString(),
+                        _unreadNotifications > 9
+                            ? '9+'
+                            : _unreadNotifications.toString(),
                         style: const TextStyle(
                           color: Colors.white,
                           fontSize: 10,
@@ -664,11 +711,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           child: Row(
             mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(
-                Icons.cloud_sync, 
-                color: _primaryColor, 
-                size: 16
-              ),
+              Icon(Icons.cloud_sync, color: _primaryColor, size: 16),
               const SizedBox(width: 6),
               Text(
                 'Terhubung ke Database',
@@ -692,7 +735,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         Text(
           '📊 Statistik Sistem',
           style: TextStyle(
-            fontSize: 18, 
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: _primaryColor,
           ),
@@ -731,7 +774,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               unit: 'Node',
               status: _activeNodes == _totalLands ? 'Optimal' : 'Perhatian',
               color: Colors.purple,
-              statusColor: _activeNodes == _totalLands ? _greenColor : Colors.orange,
+              statusColor:
+                  _activeNodes == _totalLands ? _greenColor : Colors.orange,
             ),
             _buildStatCard(
               icon: Icons.warning,
@@ -862,7 +906,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         Text(
           '🌡️ Data Sensor Rata-rata',
           style: TextStyle(
-            fontSize: 18, 
+            fontSize: 18,
             fontWeight: FontWeight.bold,
             color: _primaryColor,
           ),
@@ -879,38 +923,49 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             _buildSensorCard(
               icon: Icons.thermostat,
               title: 'Suhu',
-              value: '${_overallSensorData['temperature']?.toStringAsFixed(1)}°C',
+              value:
+                  '${_overallSensorData['temperature']?.toStringAsFixed(1)}°C',
               unit: 'Celcius',
-              status: _getStatusMessage('temperature', _overallSensorData['temperature']),
+              status: _getStatusMessage(
+                  'temperature', _overallSensorData['temperature']),
               color: _primaryColor,
-              statusColor: _getStatusColor('temperature', _overallSensorData['temperature']),
+              statusColor: _getStatusColor(
+                  'temperature', _overallSensorData['temperature']),
             ),
             _buildSensorCard(
               icon: Icons.water_drop,
               title: 'Kelembapan Udara',
               value: '${_overallSensorData['humidity']?.toStringAsFixed(1)}%',
               unit: 'Persen',
-              status: _getStatusMessage('humidity', _overallSensorData['humidity']),
+              status:
+                  _getStatusMessage('humidity', _overallSensorData['humidity']),
               color: _secondaryColor,
-              statusColor: _getStatusColor('humidity', _overallSensorData['humidity']),
+              statusColor:
+                  _getStatusColor('humidity', _overallSensorData['humidity']),
             ),
             _buildSensorCard(
               icon: Icons.grass,
               title: 'Kelembapan Tanah',
-              value: '${_overallSensorData['soilMoisture']?.toStringAsFixed(1)}%',
+              value:
+                  '${_overallSensorData['soilMoisture']?.toStringAsFixed(1)}%',
               unit: 'Persen',
-              status: _getStatusMessage('soilMoisture', _overallSensorData['soilMoisture']),
+              status: _getStatusMessage(
+                  'soilMoisture', _overallSensorData['soilMoisture']),
               color: _tertiaryColor,
-              statusColor: _getStatusColor('soilMoisture', _overallSensorData['soilMoisture']),
+              statusColor: _getStatusColor(
+                  'soilMoisture', _overallSensorData['soilMoisture']),
             ),
             _buildSensorCard(
               icon: Icons.light_mode,
               title: 'Intensitas Cahaya',
-              value: '${_overallSensorData['lightIntensity']?.toStringAsFixed(0)}',
+              value:
+                  '${_overallSensorData['lightIntensity']?.toStringAsFixed(0)}',
               unit: 'Lux',
-              status: _getStatusMessage('lightIntensity', _overallSensorData['lightIntensity']),
+              status: _getStatusMessage(
+                  'lightIntensity', _overallSensorData['lightIntensity']),
               color: Colors.amber,
-              statusColor: _getStatusColor('lightIntensity', _overallSensorData['lightIntensity']),
+              statusColor: _getStatusColor(
+                  'lightIntensity', _overallSensorData['lightIntensity']),
             ),
           ],
         ),
@@ -1078,10 +1133,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               ),
               const SizedBox(width: 12),
               _buildSystemItem(
-                icon: _systemStatus['autoMode'] ? Icons.auto_mode : Icons.engineering,
+                icon: _systemStatus['autoMode']
+                    ? Icons.auto_mode
+                    : Icons.engineering,
                 title: 'Mode Sistem',
                 status: _systemStatus['autoMode'] ? 'Auto' : 'Manual',
-                statusColor: _systemStatus['autoMode'] ? _blueColor : Colors.orange,
+                statusColor:
+                    _systemStatus['autoMode'] ? _blueColor : Colors.orange,
                 mode: 'Aktif',
               ),
             ],
@@ -1246,7 +1304,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Text(
                   activity['action'],
                   style: const TextStyle(
-                    fontSize: 12, 
+                    fontSize: 12,
                     color: Colors.black87,
                   ),
                 ),
@@ -1256,7 +1314,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           Text(
             activity['time'],
             style: const TextStyle(
-              fontSize: 10, 
+              fontSize: 10,
               color: Colors.grey,
             ),
           ),
@@ -1304,8 +1362,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   child: Column(
                     children: [
                       Icon(
-                        Icons.check_circle, 
-                        size: 40, 
+                        Icons.check_circle,
+                        size: 40,
                         color: _greenColor,
                       ),
                       const SizedBox(height: 8),
@@ -1319,8 +1377,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 )
               : Column(
-                  children: _systemAlerts.take(3).map((alert) => 
-                    _buildAlertItem(alert)).toList(),
+                  children: _systemAlerts
+                      .take(3)
+                      .map((alert) => _buildAlertItem(alert))
+                      .toList(),
                 ),
         ],
       ),
@@ -1365,7 +1425,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 Text(
                   alert['message'],
                   style: const TextStyle(
-                    fontSize: 12, 
+                    fontSize: 12,
                     color: Colors.black54,
                   ),
                 ),
@@ -1379,10 +1439,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
 
   Color _getSeverityColor(String severity) {
     switch (severity) {
-      case 'high': return _accentColor;
-      case 'medium': return Colors.orange;
-      case 'low': return _blueColor;
-      default: return Colors.grey;
+      case 'high':
+        return _accentColor;
+      case 'medium':
+        return Colors.orange;
+      case 'low':
+        return _blueColor;
+      default:
+        return Colors.grey;
     }
   }
 }

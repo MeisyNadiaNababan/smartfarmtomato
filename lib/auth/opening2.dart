@@ -41,7 +41,7 @@ class Onboarding extends StatelessWidget {
 
                   // TITLE
                   const Text(
-                    "Monitor Your Plant’s\nGrowth in Real Time.",
+                    "Nurture Your Tomatoes the\nSmart Way.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 22,
@@ -54,7 +54,7 @@ class Onboarding extends StatelessWidget {
 
                   // DESCRIPTION
                   const Text(
-                    "Get detailed, up-to-date insights about your plant’s growth, helping you understand its needs and keep it healthy every day.",
+                    "Let intelligent care recommendations support your tomato plants’ growth and ensure a bountiful harvest.",
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 14,

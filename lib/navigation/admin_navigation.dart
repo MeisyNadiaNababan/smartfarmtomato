@@ -1,3 +1,4 @@
+// ignore_for_file: unused_local_variable
 import 'package:flutter/material.dart';
 // ignore: depend_on_referenced_packages
 import 'package:provider/provider.dart';
@@ -5,6 +6,7 @@ import '../screens/admin/dashboard/admin_dashboard.dart';
 import '../screens/admin/settings/admin_settings.dart';
 import '../screens/admin/pump control/admin_controls.dart'; // TAMBAHKAN INI
 import '../screens/admin/Farmer Management/admin_farmers.dart';
+import '../screens/admin/lands/admin_lands.dart';
 import '../providers/theme_provider.dart';
 
 class AdminNavigation extends StatefulWidget {
@@ -20,46 +22,10 @@ class _AdminNavigationState extends State<AdminNavigation> {
   final List<Widget> _screens = [
     const AdminDashboardScreen(),
     const AdminFarmersScreen(),
-    _buildPlaceholderScreen('Manajemen Lahan'),
+    const AdminLandsScreen(),
     const AdminControlsScreen(),
     const AdminSettingsScreen(),
   ];
-
-  static Widget _buildPlaceholderScreen(String title) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text(title),
-      ),
-      body: Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.admin_panel_settings,
-              size: 60,
-              color: Colors.blue[400],
-            ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: const TextStyle(
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            const SizedBox(height: 8),
-            const Text(
-              'Panel Administrasi',
-              style: TextStyle(
-                fontSize: 16,
-                color: Colors.grey,
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

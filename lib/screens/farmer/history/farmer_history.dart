@@ -1,3 +1,4 @@
+// ignore_for_file: undefined_class
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
@@ -11,7 +12,7 @@ class HistoryScreen extends StatefulWidget {
 
 class _HistoryScreenState extends State<HistoryScreen> {
   final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref();
-  
+
   List<LogEntry> _logs = [];
   LogEntry? _realtimeData;
   bool _isLoading = true;

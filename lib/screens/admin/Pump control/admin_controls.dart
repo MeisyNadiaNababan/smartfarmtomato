@@ -1,8 +1,9 @@
+// ignore_for_file: undefined_class
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class AdminControlsScreen extends StatefulWidget {
-  const AdminControlsScreen({Key? key}) : super(key: key);
+  const AdminControlsScreen({super.key});
 
   @override
   State<AdminControlsScreen> createState() => _AdminControlsScreenState();
@@ -11,12 +12,12 @@ class AdminControlsScreen extends StatefulWidget {
 class _AdminControlsScreenState extends State<AdminControlsScreen> {
   // Firebase Database Reference
   final DatabaseReference _databaseRef = FirebaseDatabase.instance.ref();
-  
+
   // State variables
   bool isAutoMode = true;
   bool isPumpActive = false;
   bool isLampActive = false;
-  
+
   // System status
   Map<String, String> systemStatus = {
     'iot': 'aktif',
@@ -72,23 +73,23 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
               style: TextStyle(color: Colors.grey, fontSize: 14),
             ),
             const SizedBox(height: 20),
-            
+
             // Mode Otomatis Card
             _buildAutoModeCard(),
             const SizedBox(height: 16),
-            
+
             // Kontrol Pompa Air Card
             _buildPumpControlCard(),
             const SizedBox(height: 16),
-            
+
             // Kontrol Lampu Tubuh Card
             _buildLampControlCard(),
             const SizedBox(height: 16),
-            
+
             // Status Sistem Card
             _buildSystemStatusCard(),
             const SizedBox(height: 16),
-            
+
             // Informasi Kontrol Card
             _buildInfoCard(),
           ],
@@ -127,7 +128,7 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 4),  
+                const SizedBox(height: 4),
                 Text(
                   isAutoMode
                       ? 'Sistem mengontrol secara otomatis\nberdasarkan kondisi sensor'
@@ -142,7 +143,7 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
             onChanged: (value) {
               _toggleAutoMode();
             },
-            activeColor: Colors.green,
+            activeThumbColor: Colors.green,
             activeTrackColor: Colors.green[200],
           ),
         ],
@@ -186,7 +187,9 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            isPumpActive ? 'Pompa dalam kondisi aktif' : 'Pompa dalam kondisi non-aktif',
+            isPumpActive
+                ? 'Pompa dalam kondisi aktif'
+                : 'Pompa dalam kondisi non-aktif',
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 12),
@@ -228,7 +231,7 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
   Widget _buildLampControlCard() {
     return Container(
       decoration: BoxDecoration(
-       color: const Color(0xFFB5810D),
+        color: const Color(0xFFB5810D),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(20),
@@ -261,7 +264,9 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            isLampActive ? 'Lampu dalam kondisi aktif' : 'Lampu dalam kondisi non-aktif',
+            isLampActive
+                ? 'Lampu dalam kondisi aktif'
+                : 'Lampu dalam kondisi non-aktif',
             style: const TextStyle(color: Colors.white70, fontSize: 14),
           ),
           const SizedBox(height: 12),
@@ -328,10 +333,14 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildStatusItem(Icons.wifi, 'Koneksi\nIoT', systemStatus['iot']!),
-              _buildStatusItem(Icons.storage, 'Database', systemStatus['database']!),
-              _buildStatusItem(Icons.sensors, 'Sensor', systemStatus['sensor']!),
-              _buildStatusItem(Icons.settings_input_component, 'Akuator', systemStatus['actuator']!),
+              _buildStatusItem(
+                  Icons.wifi, 'Koneksi\nIoT', systemStatus['iot']!),
+              _buildStatusItem(
+                  Icons.storage, 'Database', systemStatus['database']!),
+              _buildStatusItem(
+                  Icons.sensors, 'Sensor', systemStatus['sensor']!),
+              _buildStatusItem(Icons.settings_input_component, 'Akuator',
+                  systemStatus['actuator']!),
             ],
           ),
         ],
@@ -340,11 +349,16 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
   }
 
   Widget _buildStatusItem(IconData icon, String label, String status) {
-    Color statusColor = status == 'aktif' ? Colors.green : 
-                        status == 'sitrep' ? Colors.green :
-                        status == 'auto' ? Colors.green : 
-                        status == 'manual' ? Colors.blue : Colors.grey;
-    
+    Color statusColor = status == 'aktif'
+        ? Colors.green
+        : status == 'sitrep'
+            ? Colors.green
+            : status == 'auto'
+                ? Colors.green
+                : status == 'manual'
+                    ? Colors.blue
+                    : Colors.grey;
+
     return Container(
       width: 70,
       padding: const EdgeInsets.all(12),
@@ -457,22 +471,22 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
         isLampActive = false;
       }
     });
-    
+
     // Update to Firebase
     _databaseRef.child('control/autoMode').set(isAutoMode);
     _databaseRef.child('control/pump').set(isPumpActive);
     _databaseRef.child('control/light').set(isLampActive);
-    
+
     _logAction('Mode ${isAutoMode ? 'OTOMATIS' : 'MANUAL'} diaktifkan');
     if (isAutoMode) {
       _logAction('Pompa Air dan Lampu Tubuh DIHIDUPKAN (Auto Mode)');
     } else {
       _logAction('Pompa Air dan Lampu Tubuh DIMATIKAN (Manual Mode)');
     }
-    
+
     _showSnackbar(
-      isAutoMode 
-          ? 'Mode Otomatis Diaktifkan - Pompa & Lampu Menyala' 
+      isAutoMode
+          ? 'Mode Otomatis Diaktifkan - Pompa & Lampu Menyala'
           : 'Mode Manual Diaktifkan - Pompa & Lampu Mati',
       isAutoMode ? Colors.green : Colors.orange,
     );
@@ -482,11 +496,11 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
     setState(() {
       isPumpActive = !isPumpActive;
     });
-    
+
     // Update to Firebase
     _databaseRef.child('control/pump').set(isPumpActive);
     _logAction('Pompa Air ${isPumpActive ? 'DIHIDUPKAN' : 'DIMATIKAN'}');
-    
+
     _showSnackbar(
       isPumpActive ? 'Pompa Air Diaktifkan' : 'Pompa Air Dimatikan',
       isPumpActive ? Colors.blue : Colors.grey,
@@ -497,11 +511,11 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
     setState(() {
       isLampActive = !isLampActive;
     });
-    
+
     // Update to Firebase
     _databaseRef.child('control/light').set(isLampActive);
     _logAction('Lampu Tubuh ${isLampActive ? 'DIHIDUPKAN' : 'DIMATIKAN'}');
-    
+
     _showSnackbar(
       isLampActive ? 'Lampu Tubuh Diaktifkan' : 'Lampu Tubuh Dimatikan',
       isLampActive ? Colors.orange : Colors.grey,

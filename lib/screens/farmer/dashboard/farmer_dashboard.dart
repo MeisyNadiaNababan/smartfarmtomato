@@ -1,3 +1,4 @@
+// ignore_for_file: undefined_class, unused_local_variable
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:provider/provider.dart';
@@ -294,7 +295,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const Spacer(),
@@ -317,7 +318,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                   onPressed: () => Navigator.pop(context),
                   icon: Icon(
                     Icons.close,
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -347,7 +348,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                           size: 60,
                           color: Theme.of(context)
                               .colorScheme
-                              .onBackground
+                              .onSurface
                               .withOpacity(0.5),
                         ),
                         const SizedBox(height: 16),
@@ -356,7 +357,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                           style: TextStyle(
                             color: Theme.of(context)
                                 .colorScheme
-                                .onBackground
+                                .onSurface
                                 .withOpacity(0.7),
                           ),
                         ),
@@ -424,7 +425,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                         ? FontWeight.normal
                         : FontWeight.bold,
                     fontSize: 14,
-                    color: Theme.of(context).colorScheme.onBackground,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const SizedBox(height: 4),
@@ -434,7 +435,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                     fontSize: 12,
                     color: Theme.of(context)
                         .colorScheme
-                        .onBackground
+                        .onSurface
                         .withOpacity(0.7),
                   ),
                 ),
@@ -445,7 +446,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                     fontSize: 10,
                     color: Theme.of(context)
                         .colorScheme
-                        .onBackground
+                        .onSurface
                         .withOpacity(0.5),
                   ),
                 ),
@@ -473,9 +474,8 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
 
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: isDarkMode
-            ? Theme.of(context).colorScheme.background
-            : Colors.white,
+        backgroundColor:
+            isDarkMode ? Theme.of(context).colorScheme.surface : Colors.white,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -509,10 +509,8 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                 'Memuat data sensor...',
                 style: TextStyle(
                   fontSize: 14,
-                  color: Theme.of(context)
-                      .colorScheme
-                      .onBackground
-                      .withOpacity(0.6),
+                  color:
+                      Theme.of(context).colorScheme.onSurface.withOpacity(0.6),
                 ),
               ),
             ],
@@ -523,7 +521,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
 
     return Scaffold(
       backgroundColor:
-          isDarkMode ? Theme.of(context).colorScheme.background : Colors.white,
+          isDarkMode ? Theme.of(context).colorScheme.surface : Colors.white,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -1099,47 +1097,6 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
     );
   }
 
-  Widget _buildQuickActionItem({
-    required IconData icon,
-    required String title,
-    required Color color,
-    required VoidCallback onTap,
-    required bool isDarkMode,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              color:
-                  isDarkMode ? color.withOpacity(0.2) : color.withOpacity(0.1),
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: color.withOpacity(isDarkMode ? 0.3 : 0.2),
-                  blurRadius: 8,
-                  offset: const Offset(0, 3),
-                ),
-              ],
-            ),
-            child: Icon(icon, color: color, size: 24),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            title,
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w500,
-              color: color,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLandInfoCard(bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.all(16),
@@ -1210,7 +1167,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
             child: ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.asset(
-                'images/maps.png', 
+                'images/maps.png',
               ),
             ),
           ),

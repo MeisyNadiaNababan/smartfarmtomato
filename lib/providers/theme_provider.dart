@@ -40,7 +40,6 @@ class ThemeProvider with ChangeNotifier {
     colorScheme: const ColorScheme.light(
       primary: Colors.green,
       secondary: Colors.blue,
-      background: Color(0xFFE8F5E8),
       surface: Colors.white,
     ),
     scaffoldBackgroundColor: const Color(0xFFE8F5E8),
@@ -63,7 +62,6 @@ class ThemeProvider with ChangeNotifier {
     colorScheme: ColorScheme.dark(
       primary: Colors.green.shade800,
       secondary: Colors.lightBlue,
-      background: const Color(0xFF121212),
       surface: const Color(0xFF1E1E1E),
     ),
     scaffoldBackgroundColor: const Color(0xFF121212),

@@ -5,11 +5,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 
 import 'auth/home_screen.dart';
-import 'auth/signin_screen.dart';
-import 'auth/signup_screen.dart';
 import 'navigation/admin_navigation.dart';
 import 'navigation/farmer_navigation.dart';
-import 'screens/farmer/dashboard/farmer_dashboard.dart';
 import 'app_user.dart';
 import 'core/firebase_options.dart';
 import 'providers/theme_provider.dart'; // Import yang benar
@@ -287,7 +284,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
 
   Widget _buildQuickLoadingScreen() {
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: Theme.of(context).colorScheme.surface,
       body: Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -298,7 +295,7 @@ class _AuthWrapperState extends State<AuthWrapper> {
               'Loading...',
               style: TextStyle(
                 fontSize: 14, 
-                color: Theme.of(context).colorScheme.onBackground.withOpacity(0.6)
+                color: Theme.of(context).colorScheme.onSurface.withOpacity(0.6)
               ),
             ),
           ],
