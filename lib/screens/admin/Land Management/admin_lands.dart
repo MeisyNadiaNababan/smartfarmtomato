@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/theme_provider.dart';
 
 class AdminNodesScreen extends StatefulWidget {
   const AdminNodesScreen({super.key});
@@ -80,6 +82,9 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
   }
 
   void _showAddNodeDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    
     final TextEditingController nameController = TextEditingController();
     final TextEditingController uidController = TextEditingController();
     final TextEditingController ownerController = TextEditingController();
@@ -88,40 +93,74 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Tambah Node Baru'),
+        backgroundColor: isDarkMode ? Colors.grey[800]! : Colors.white,
+        title: Text(
+          'Tambah Node Baru',
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
         content: SingleChildScrollView(
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 controller: nameController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Nama Node',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(
+                    color: isDarkMode ? Colors.grey[400]! : Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100],
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: uidController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'UID Node',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(
+                    color: isDarkMode ? Colors.grey[400]! : Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100],
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: ownerController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Pemilik',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(
+                    color: isDarkMode ? Colors.grey[400]! : Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100],
                 ),
               ),
               const SizedBox(height: 12),
               TextField(
                 controller: locationController,
-                decoration: const InputDecoration(
+                decoration: InputDecoration(
                   labelText: 'Lokasi',
-                  border: OutlineInputBorder(),
+                  labelStyle: TextStyle(
+                    color: isDarkMode ? Colors.grey[400]! : Colors.black,
+                  ),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  filled: true,
+                  fillColor: isDarkMode ? Colors.grey[700]! : Colors.grey[100],
                 ),
               ),
             ],
@@ -130,7 +169,12 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: Text(
+              'Batal',
+              style: TextStyle(
+                color: isDarkMode ? Colors.grey[400]! : Colors.black,
+              ),
+            ),
           ),
           ElevatedButton(
             onPressed: () => _addNode(
@@ -187,15 +231,34 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
   }
 
   void _deleteNode(String nodeId) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Hapus Node'),
-        content: const Text('Apakah Anda yakin ingin menghapus node ini?'),
+        backgroundColor: isDarkMode ? Colors.grey[800]! : Colors.white,
+        title: Text(
+          'Hapus Node',
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
+        content: Text(
+          'Apakah Anda yakin ingin menghapus node ini?',
+          style: TextStyle(
+            color: isDarkMode ? Colors.grey[400]! : Colors.black,
+          ),
+        ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Batal'),
+            child: Text(
+              'Batal',
+              style: TextStyle(
+                color: isDarkMode ? Colors.grey[400]! : Colors.black,
+              ),
+            ),
           ),
           TextButton(
             onPressed: () async {
@@ -215,45 +278,63 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
   }
 
   void _showNodeDetails(Map<String, dynamic> node) {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: Text(node['name']),
+        backgroundColor: isDarkMode ? Colors.grey[800]! : Colors.white,
+        title: Text(
+          node['name'],
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black,
+          ),
+        ),
         content: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             mainAxisSize: MainAxisSize.min,
             children: [
-              _buildDetailItem('UID', node['uid']),
-              _buildDetailItem('Pemilik', node['owner']),
-              _buildDetailItem('Lokasi', node['location']),
-              _buildDetailItem('Status', node['status']),
+              _buildDetailItem('UID', node['uid'], isDarkMode),
+              _buildDetailItem('Pemilik', node['owner'], isDarkMode),
+              _buildDetailItem('Lokasi', node['location'], isDarkMode),
+              _buildDetailItem('Status', node['status'], isDarkMode),
               _buildDetailItem(
                 'Terakhir Online', 
                 node['lastSeen'] != null 
                   ? DateTime.fromMillisecondsSinceEpoch(node['lastSeen']).toString()
-                  : 'Never'
+                  : 'Never',
+                isDarkMode,
               ),
               const SizedBox(height: 16),
-              const Text(
+              Text(
                 'Data Sensor Terkini:',
-                style: TextStyle(fontWeight: FontWeight.bold),
+                style: TextStyle(
+                  fontWeight: FontWeight.bold,
+                  color: isDarkMode ? Colors.white : Colors.black,
+                ),
               ),
-              _buildSensorData(node['sensorData']),
+              _buildSensorData(node['sensorData'], isDarkMode),
             ],
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Tutup'),
+            child: Text(
+              'Tutup',
+              style: TextStyle(
+                color: isDarkMode ? Colors.grey[400]! : Colors.black,
+              ),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildDetailItem(String label, String value) {
+  Widget _buildDetailItem(String label, String value, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 4),
       child: Row(
@@ -263,33 +344,56 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
             width: 120,
             child: Text(
               '$label:',
-              style: const TextStyle(fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
             ),
           ),
-          Expanded(child: Text(value)),
+          Expanded(
+            child: Text(
+              value,
+              style: TextStyle(
+                color: isDarkMode ? Colors.grey[400]! : Colors.black,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildSensorData(Map<String, dynamic> sensorData) {
+  Widget _buildSensorData(Map<String, dynamic> sensorData, bool isDarkMode) {
     return Column(
       children: [
-        _buildSensorItem('Suhu', '${sensorData['temperature'] ?? 0}°C'),
-        _buildSensorItem('Kelembapan Udara', '${sensorData['humidity'] ?? 0}%'),
-        _buildSensorItem('Kelembapan Tanah', '${sensorData['soilMoisture'] ?? 0}%'),
-        _buildSensorItem('Intensitas Cahaya', '${sensorData['lightIntensity'] ?? 0} lux'),
+        _buildSensorItem('Suhu', '${sensorData['temperature'] ?? 0}°C', isDarkMode),
+        _buildSensorItem('Kelembapan Udara', '${sensorData['humidity'] ?? 0}%', isDarkMode),
+        _buildSensorItem('Kelembapan Tanah', '${sensorData['soilMoisture'] ?? 0}%', isDarkMode),
+        _buildSensorItem('Intensitas Cahaya', '${sensorData['lightIntensity'] ?? 0} lux', isDarkMode),
       ],
     );
   }
 
-  Widget _buildSensorItem(String label, String value) {
+  Widget _buildSensorItem(String label, String value, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
         children: [
-          SizedBox(width: 120, child: Text(label)),
-          Text(value),
+          SizedBox(
+            width: 120, 
+            child: Text(
+              label,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: isDarkMode ? Colors.grey[400]! : Colors.black,
+            ),
+          ),
         ],
       ),
     );
@@ -303,17 +407,25 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final backgroundColor = isDarkMode ? Colors.grey[900]! : Theme.of(context).colorScheme.background;
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final cardColor = isDarkMode ? Colors.grey[800]! : Theme.of(context).cardColor;
+    final borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[200];
+    final chipColor = isDarkMode ? Colors.grey[700]! : Colors.grey[100];
+    
     return Scaffold(
-      backgroundColor: Theme.of(context).colorScheme.background,
+      backgroundColor: backgroundColor,
       body: Column(
         children: [
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Theme.of(context).cardColor,
+              color: cardColor,
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.1),
+                  color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
                   blurRadius: 4,
                   offset: const Offset(0, 2),
                 ),
@@ -323,11 +435,12 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
               children: [
                 Row(
                   children: [
-                    const Text(
+                    Text(
                       'Manajemen Node IoT',
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
+                        color: textColor,
                       ),
                     ),
                     const Spacer(),
@@ -343,10 +456,16 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
                   controller: _searchController,
                   decoration: InputDecoration(
                     hintText: 'Cari node...',
-                    prefixIcon: const Icon(Icons.search),
+                    hintStyle: TextStyle(
+                      color: isDarkMode ? Colors.grey[400]! : Colors.grey[600],
+                    ),
+                    prefixIcon: Icon(Icons.search, 
+                        color: isDarkMode ? Colors.grey[400]! : const Color(0xFF98A2B3)),
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(8),
                     ),
+                    filled: true,
+                    fillColor: isDarkMode ? Colors.grey[700]! : const Color(0xFFF2F4F7),
                   ),
                 ),
               ],
@@ -354,15 +473,24 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
           ),
           Expanded(
             child: _isLoading
-                ? const Center(child: CircularProgressIndicator())
+                ? Center(child: CircularProgressIndicator(
+                    color: isDarkMode ? Colors.white : Colors.blue,
+                  ))
                 : _filteredNodes.isEmpty
-                    ? const Center(child: Text('Tidak ada node ditemukan'))
+                    ? Center(
+                        child: Text(
+                          'Tidak ada node ditemukan',
+                          style: TextStyle(
+                            color: isDarkMode ? Colors.grey[400]! : Colors.grey[600],
+                          ),
+                        ),
+                      )
                     : ListView.builder(
                         padding: const EdgeInsets.all(16),
                         itemCount: _filteredNodes.length,
                         itemBuilder: (context, index) {
                           final node = _filteredNodes[index];
-                          return _buildNodeCard(node);
+                          return _buildNodeCard(node, isDarkMode, textColor, borderColor, chipColor);
                         },
                       ),
           ),
@@ -371,12 +499,13 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
     );
   }
 
-  Widget _buildNodeCard(Map<String, dynamic> node) {
+  Widget _buildNodeCard(Map<String, dynamic> node, bool isDarkMode, Color textColor, Color borderColor, Color chipColor) {
     final isOnline = node['status'] == 'online';
     final sensorData = node['sensorData'] ?? {};
 
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
+      color: isDarkMode ? Colors.grey[800]! : Colors.white,
       child: Padding(
         padding: const EdgeInsets.all(16),
         child: Column(
@@ -403,40 +532,54 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
                     children: [
                       Text(
                         node['name'],
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
+                          color: textColor,
                         ),
                       ),
                       Text(
                         'UID: ${node['uid']}',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey[600],
+                          color: isDarkMode ? Colors.grey[400]! : Colors.grey[600],
                         ),
                       ),
                     ],
                   ),
                 ),
                 PopupMenuButton(
+                  color: isDarkMode ? Colors.grey[800]! : Colors.white,
                   itemBuilder: (context) => [
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'details',
                       child: Row(
                         children: [
-                          Icon(Icons.info, size: 20),
-                          SizedBox(width: 8),
-                          Text('Detail'),
+                          Icon(Icons.info, 
+                              size: 20, 
+                              color: isDarkMode ? Colors.white : Colors.black),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Detail',
+                            style: TextStyle(
+                              color: isDarkMode ? Colors.white : Colors.black,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                    const PopupMenuItem(
+                    PopupMenuItem(
                       value: 'delete',
                       child: Row(
                         children: [
-                          Icon(Icons.delete, size: 20, color: Colors.red),
-                          SizedBox(width: 8),
-                          Text('Hapus', style: TextStyle(color: Colors.red)),
+                          Icon(Icons.delete, 
+                              size: 20, 
+                              color: Colors.red),
+                          const SizedBox(width: 8),
+                          const Text(
+                            'Hapus', 
+                            style: TextStyle(color: Colors.red),
+                          ),
                         ],
                       ),
                     ),
@@ -455,35 +598,41 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
             Wrap(
               spacing: 8,
               children: [
-                _buildInfoChip('Pemilik', node['owner']),
-                _buildInfoChip('Lokasi', node['location']),
+                _buildInfoChip('Pemilik', node['owner'], isDarkMode, chipColor),
+                _buildInfoChip('Lokasi', node['location'], isDarkMode, chipColor),
                 _buildStatusChip(isOnline ? 'Online' : 'Offline', isOnline),
               ],
             ),
             const SizedBox(height: 12),
-            const Text(
+            Text(
               'Data Sensor:',
-              style: TextStyle(fontWeight: FontWeight.w500),
+              style: TextStyle(
+                fontWeight: FontWeight.w500,
+                color: textColor,
+              ),
             ),
             const SizedBox(height: 8),
-            _buildSensorGrid(sensorData),
+            _buildSensorGrid(sensorData, isDarkMode),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildInfoChip(String label, String value) {
+  Widget _buildInfoChip(String label, String value, bool isDarkMode, Color chipColor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 4),
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.grey[100],
+        color: chipColor,
         borderRadius: BorderRadius.circular(16),
       ),
       child: Text(
         '$label: $value',
-        style: const TextStyle(fontSize: 12),
+        style: TextStyle(
+          fontSize: 12,
+          color: isDarkMode ? Colors.grey[300]! : Colors.black,
+        ),
       ),
     );
   }
@@ -509,7 +658,7 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
     );
   }
 
-  Widget _buildSensorGrid(Map<String, dynamic> sensorData) {
+  Widget _buildSensorGrid(Map<String, dynamic> sensorData, bool isDarkMode) {
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -518,21 +667,21 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
       mainAxisSpacing: 8,
       childAspectRatio: 3,
       children: [
-        _buildSensorItemCard(Icons.thermostat, 'Suhu', '${sensorData['temperature'] ?? 0}°C', Colors.red),
-        _buildSensorItemCard(Icons.water_drop, 'Udara', '${sensorData['humidity'] ?? 0}%', Colors.blue),
-        _buildSensorItemCard(Icons.grass, 'Tanah', '${sensorData['soilMoisture'] ?? 0}%', Colors.brown),
-        _buildSensorItemCard(Icons.light_mode, 'Cahaya', '${sensorData['lightIntensity'] ?? 0} lux', Colors.amber),
+        _buildSensorItemCard(Icons.thermostat, 'Suhu', '${sensorData['temperature'] ?? 0}°C', Colors.red, isDarkMode),
+        _buildSensorItemCard(Icons.water_drop, 'Udara', '${sensorData['humidity'] ?? 0}%', Colors.blue, isDarkMode),
+        _buildSensorItemCard(Icons.grass, 'Tanah', '${sensorData['soilMoisture'] ?? 0}%', Colors.brown, isDarkMode),
+        _buildSensorItemCard(Icons.light_mode, 'Cahaya', '${sensorData['lightIntensity'] ?? 0} lux', Colors.amber, isDarkMode),
       ],
     );
   }
 
-  Widget _buildSensorItemCard(IconData icon, String label, String value, Color color) {
+  Widget _buildSensorItemCard(IconData icon, String label, String value, Color color, bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.all(8),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withOpacity(isDarkMode ? 0.2 : 0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withOpacity(isDarkMode ? 0.4 : 0.3)),
       ),
       child: Row(
         children: [
@@ -545,13 +694,17 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
               children: [
                 Text(
                   label,
-                  style: const TextStyle(fontSize: 10),
+                  style: TextStyle(
+                    fontSize: 10,
+                    color: isDarkMode ? Colors.grey[300]! : Colors.black,
+                  ),
                 ),
                 Text(
                   value,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
+                    color: isDarkMode ? Colors.white : Colors.black,
                   ),
                 ),
               ],

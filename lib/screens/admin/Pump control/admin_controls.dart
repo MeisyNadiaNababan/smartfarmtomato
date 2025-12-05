@@ -1,6 +1,8 @@
 // ignore_for_file: undefined_class
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/theme_provider.dart';
 
 class AdminControlsScreen extends StatefulWidget {
   const AdminControlsScreen({super.key});
@@ -49,59 +51,54 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final backgroundColor = isDarkMode ? Colors.grey[900]! : Colors.grey[100]!;
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final cardColor = isDarkMode ? Colors.grey[800]! : Colors.white;
+    final subtitleColor = isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
+
     return Scaffold(
-      backgroundColor: Colors.grey[100],
-      // appBar: AppBar(
-      //   backgroundColor: Colors.white,
-      //   elevation: 0,
-      //   leading: IconButton(
-      //     icon: const Icon(Icons.arrow_back, color: Colors.black),
-      //     onPressed: () => Navigator.pop(context),
-      //   ),
-      //   // title: const Text(
-      //   //   'Kontrol Akuator',
-      //   //   style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-      //   // ),
-      // ),
+      backgroundColor: backgroundColor,
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Kontrol manual pompa air dan lampu tubuh',
-              style: TextStyle(color: Colors.grey, fontSize: 14),
+              style: TextStyle(color: subtitleColor, fontSize: 14),
             ),
             const SizedBox(height: 20),
 
             // Mode Otomatis Card
-            _buildAutoModeCard(),
+            _buildAutoModeCard(isDarkMode),
             const SizedBox(height: 16),
 
             // Kontrol Pompa Air Card
-            _buildPumpControlCard(),
+            _buildPumpControlCard(isDarkMode),
             const SizedBox(height: 16),
 
             // Kontrol Lampu Tubuh Card
-            _buildLampControlCard(),
+            _buildLampControlCard(isDarkMode),
             const SizedBox(height: 16),
 
             // Status Sistem Card
-            _buildSystemStatusCard(),
+            _buildSystemStatusCard(isDarkMode),
             const SizedBox(height: 16),
 
             // Informasi Kontrol Card
-            _buildInfoCard(),
+            _buildInfoCard(isDarkMode, cardColor, textColor, subtitleColor),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildAutoModeCard() {
+  Widget _buildAutoModeCard(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color.fromARGB(255, 32, 56, 43),
+        color: isDarkMode ? Colors.grey[800]! : const Color.fromARGB(255, 32, 56, 43),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(20),
@@ -110,10 +107,11 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
           Container(
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDarkMode ? Colors.grey[700]! : Colors.white,
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Icon(Icons.settings_suggest, color: Color(0xFF2D5F5D)),
+            child: Icon(Icons.settings_suggest, 
+                color: isDarkMode ? Colors.white : const Color(0xFF2D5F5D)),
           ),
           const SizedBox(width: 16),
           Expanded(
@@ -151,10 +149,10 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
     );
   }
 
-  Widget _buildPumpControlCard() {
+  Widget _buildPumpControlCard(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF01565B),
+        color: isDarkMode ? Colors.grey[800]! : const Color(0xFF01565B),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(20),
@@ -228,10 +226,10 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
     );
   }
 
-  Widget _buildLampControlCard() {
+  Widget _buildLampControlCard(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFFB5810D),
+        color: isDarkMode ? Colors.grey[800]! : const Color(0xFFB5810D),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(20),
@@ -305,10 +303,10 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
     );
   }
 
-  Widget _buildSystemStatusCard() {
+  Widget _buildSystemStatusCard(bool isDarkMode) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF7C341F),
+        color: isDarkMode ? Colors.grey[800]! : const Color(0xFF7C341F),
         borderRadius: BorderRadius.circular(16),
       ),
       padding: const EdgeInsets.all(20),
@@ -334,13 +332,13 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildStatusItem(
-                  Icons.wifi, 'Koneksi\nIoT', systemStatus['iot']!),
+                  Icons.wifi, 'Koneksi\nIoT', systemStatus['iot']!, isDarkMode),
               _buildStatusItem(
-                  Icons.storage, 'Database', systemStatus['database']!),
+                  Icons.storage, 'Database', systemStatus['database']!, isDarkMode),
               _buildStatusItem(
-                  Icons.sensors, 'Sensor', systemStatus['sensor']!),
+                  Icons.sensors, 'Sensor', systemStatus['sensor']!, isDarkMode),
               _buildStatusItem(Icons.settings_input_component, 'Akuator',
-                  systemStatus['actuator']!),
+                  systemStatus['actuator']!, isDarkMode),
             ],
           ),
         ],
@@ -348,7 +346,7 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
     );
   }
 
-  Widget _buildStatusItem(IconData icon, String label, String status) {
+  Widget _buildStatusItem(IconData icon, String label, String status, bool isDarkMode) {
     Color statusColor = status == 'aktif'
         ? Colors.green
         : status == 'sitrep'
@@ -363,19 +361,20 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
       width: 70,
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[700]! : Colors.white,
         borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
-          Icon(icon, color: Colors.red[800], size: 28),
+          Icon(icon, color: isDarkMode ? Colors.white : Colors.red[800], size: 28),
           const SizedBox(height: 8),
           Text(
             label,
             textAlign: TextAlign.center,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 10,
               fontWeight: FontWeight.bold,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
           const SizedBox(height: 4),
@@ -399,12 +398,12 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
     );
   }
 
-  Widget _buildInfoCard() {
+  Widget _buildInfoCard(bool isDarkMode, Color cardColor, Color textColor, Color subtitleColor) {
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(16),
-        boxShadow: [
+        boxShadow: isDarkMode ? [] : [
           BoxShadow(
             color: Colors.grey.withOpacity(0.1),
             blurRadius: 10,
@@ -418,13 +417,14 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
         children: [
           Row(
             children: [
-              Icon(Icons.info, color: Colors.grey[600], size: 24),
+              Icon(Icons.info, color: isDarkMode ? Colors.grey[400] : Colors.grey[600], size: 24),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Informasi Kontrol',
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  color: textColor,
                 ),
               ),
             ],
@@ -432,25 +432,28 @@ class _AdminControlsScreenState extends State<AdminControlsScreen> {
           const SizedBox(height: 16),
           _buildInfoItem(
             '• Mode Otomatis: Sistem akan mengontrol pompa dan lampu\n  secara otomatis berdasarkan data sensor.',
+            subtitleColor,
           ),
           const SizedBox(height: 8),
           _buildInfoItem(
             '• Mode Manual: Anda dapat mengontrol pompa dan lampu\n  secara manual melalui kontrol tombol.',
+            subtitleColor,
           ),
           const SizedBox(height: 8),
           _buildInfoItem(
             '• Status real-time: Status sistem akan langsung\n  terlihat di dashboard.',
+            subtitleColor,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoItem(String text) {
+  Widget _buildInfoItem(String text, Color color) {
     return Text(
       text,
       style: TextStyle(
-        color: Colors.grey[700],
+        color: color,
         fontSize: 13,
         height: 1.5,
       ),

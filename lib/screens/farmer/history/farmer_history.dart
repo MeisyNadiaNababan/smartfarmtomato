@@ -2,6 +2,8 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/theme_provider.dart';
 
 class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
@@ -18,7 +20,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   bool _isLoading = true;
   bool _hasError = false;
 
-  // Warna sesuai design
+  // Warna sesuai design untuk light mode
   final Color _darkGreen = const Color(0xFF2D5016);
   final Color _red = const Color(0xFFB71C1C);
   final Color _blue = const Color(0xFF1565C0);
@@ -29,6 +31,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
   final Color _burgundy = const Color(0xFF8B2F3C);
   final Color _darkBrown = const Color(0xFF6B4423);
   final Color _purple = const Color(0xFF6A1B9A);
+  
+  // Warna untuk dark mode
+  final Color _darkModeBg = const Color(0xFF121212);
+  final Color _darkModeSurface = const Color(0xFF1E1E1E);
+  final Color _darkModePrimary = const Color(0xFF4CAF50);
+  final Color _darkModeSecondary = const Color(0xFF2196F3);
+  final Color _darkModeAccent = const Color(0xFFFF9800);
   
   @override
   void initState() {
@@ -209,8 +218,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  // Fungsi untuk mendapatkan warna berdasarkan waktu
-  Color _getTimeOfDayColor(DateTime date) {
+  // Fungsi untuk mendapatkan warna berdasarkan waktu (untuk light mode)
+  Color _getTimeOfDayColor(DateTime date, bool isDarkMode) {
+    if (isDarkMode) {
+      return _darkModeSurface;
+    }
+    
     final hour = date.hour;
     if (hour >= 5 && hour < 11) {
       return _teal; // Pagi
@@ -223,13 +236,31 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
+  // Fungsi untuk mendapatkan warna teks berdasarkan mode gelap
+  Color _getTextColor(bool isDarkMode) {
+    return isDarkMode ? Colors.white : Colors.black;
+  }
+
+  // Fungsi untuk mendapatkan warna latar belakang berdasarkan mode gelap
+  Color _getBackgroundColor(bool isDarkMode) {
+    return isDarkMode ? _darkModeBg : Colors.grey.shade50;
+  }
+
+  // Fungsi untuk mendapatkan warna card berdasarkan mode gelap
+  Color _getCardColor(bool isDarkMode) {
+    return isDarkMode ? _darkModeSurface : Colors.white;
+  }
+
   // Hitung statistik
   int get _totalData => _logs.length;
 
   @override
   Widget build(BuildContext context) {
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+
     return Scaffold(
-      backgroundColor: Colors.grey.shade50,
+      backgroundColor: _getBackgroundColor(isDarkMode),
       body: SafeArea(
         child: Padding(
           padding: const EdgeInsets.all(16),
@@ -248,7 +279,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.bold,
-                          color: _darkGreen,
+                          color: isDarkMode ? Colors.white : _darkGreen,
                         ),
                       ),
                       const SizedBox(height: 4),
@@ -256,47 +287,52 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         'Pantau Perkembangan Tanaman',
                         style: TextStyle(
                           fontSize: 12,
-                          color: _gray,
+                          color: isDarkMode ? Colors.grey.shade400 : _gray,
                         ),
                       ),
                     ],
                   ),
                   IconButton(
                     onPressed: _refreshData,
-                    icon: Icon(Icons.refresh, color: _darkGreen, size: 24),
+                    icon: Icon(Icons.refresh, 
+                      color: isDarkMode ? _darkModePrimary : _darkGreen, 
+                      size: 24),
                   ),
                 ],
               ),
               const SizedBox(height: 16),
               
               // Realtime Data Card
-              if (_realtimeData != null) _buildRealtimeCard(),
+              if (_realtimeData != null) _buildRealtimeCard(isDarkMode),
               const SizedBox(height: 16),
 
               // History Header
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
                 decoration: BoxDecoration(
-                  color: _burgundy,
+                  color: isDarkMode ? _darkModeSurface : _burgundy,
                   borderRadius: BorderRadius.circular(8),
+                  border: isDarkMode ? Border.all(color: Colors.grey.shade800) : null,
                 ),
                 child: Row(
                   children: [
-                    Icon(Icons.history, color: Colors.white, size: 20),
+                    Icon(Icons.history, 
+                      color: isDarkMode ? _darkModePrimary : Colors.white, 
+                      size: 20),
                     const SizedBox(width: 8),
                     Text(
                       'Riwayat Monitoring',
                       style: TextStyle(
                         fontSize: 14,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: isDarkMode ? Colors.white : Colors.white,
                       ),
                     ),
                     const Spacer(),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.2),
+                        color: isDarkMode ? _darkModePrimary.withOpacity(0.2) : Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Text(
@@ -304,7 +340,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                         style: TextStyle(
                           fontSize: 12,
                           fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                          color: isDarkMode ? _darkModePrimary : Colors.white,
                         ),
                       ),
                     ),
@@ -316,12 +352,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
               // Content
               Expanded(
                 child: _isLoading
-                    ? _buildLoadingState()
+                    ? _buildLoadingState(isDarkMode)
                     : _hasError
-                        ? _buildErrorState()
+                        ? _buildErrorState(isDarkMode)
                         : _logs.isEmpty
-                            ? _buildEmptyState()
-                            : _buildHistoryList(),
+                            ? _buildEmptyState(isDarkMode)
+                            : _buildHistoryList(isDarkMode),
               ),
             ],
           ),
@@ -330,7 +366,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildRealtimeCard() {
+  Widget _buildRealtimeCard(bool isDarkMode) {
     final log = _realtimeData!;
     final date = DateTime.fromMillisecondsSinceEpoch(log.timestamp);
     final timeFormat = DateFormat('HH:mm:ss');
@@ -339,15 +375,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: _darkGreen,
+        color: isDarkMode ? _darkModeSurface : _darkGreen,
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
             blurRadius: 8,
             offset: const Offset(0, 4),
           ),
         ],
+        border: isDarkMode ? Border.all(color: Colors.grey.shade800) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -361,13 +398,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.white : Colors.white,
                 ),
               ),
               Text(
                 dateFormat.format(date),
                 style: TextStyle(
-                  color: Colors.white70,
+                  color: isDarkMode ? Colors.grey.shade400 : Colors.white70,
                   fontSize: 12,
                 ),
               ),
@@ -377,7 +414,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Text(
             'Tahapan: ${log.plantStage} | Hari ke-${log.plantAge ?? 1}',
             style: TextStyle(
-              color: Colors.white70,
+              color: isDarkMode ? Colors.grey.shade400 : Colors.white70,
               fontSize: 12,
             ),
           ),
@@ -389,7 +426,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Text(
                 'Current Data',
                 style: TextStyle(
-                  color: Colors.white,
+                  color: isDarkMode ? Colors.white : Colors.white,
                   fontSize: 13,
                   fontWeight: FontWeight.w500,
                 ),
@@ -399,13 +436,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.15),
+                  color: isDarkMode ? _darkModePrimary.withOpacity(0.2) : Colors.white.withOpacity(0.15),
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
                   timeFormat.format(date),
                   style: TextStyle(
-                    color: Colors.white,
+                    color: isDarkMode ? _darkModePrimary : Colors.white,
                     fontSize: 12,
                     fontWeight: FontWeight.bold,
                   ),
@@ -419,10 +456,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
-              _buildRealtimeBadge('🌡️', '${log.temperature?.toStringAsFixed(1) ?? '-'}°C'),
-              _buildRealtimeBadge('💧', '${log.humidity?.toStringAsFixed(1) ?? '-'}%'),
-              _buildRealtimeBadge('🌱', '${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%'),
-              _buildRealtimeBadge('💡', '${log.brightness?.toStringAsFixed(1) ?? '-'}%'),
+              _buildRealtimeBadge('🌡️', '${log.temperature?.toStringAsFixed(1) ?? '-'}°C', isDarkMode),
+              _buildRealtimeBadge('💧', '${log.humidity?.toStringAsFixed(1) ?? '-'}%', isDarkMode),
+              _buildRealtimeBadge('🌱', '${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%', isDarkMode),
+              _buildRealtimeBadge('💡', '${log.brightness?.toStringAsFixed(1) ?? '-'}%', isDarkMode),
             ],
           ),
           const SizedBox(height: 12),
@@ -433,7 +470,9 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: log.pumpStatus == 'ON' ? Colors.green : Colors.grey,
+                  color: log.pumpStatus == 'ON' 
+                    ? (isDarkMode ? _darkModePrimary : Colors.green) 
+                    : Colors.grey,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Text(
@@ -450,7 +489,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: log.soilCategory == 'SANGAT KERING' || log.soilCategory == 'KERING' 
-                      ? Colors.red 
+                      ? (isDarkMode ? Colors.red.shade700 : Colors.red) 
                       : Colors.grey,
                   borderRadius: BorderRadius.circular(8),
                 ),
@@ -470,11 +509,11 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildRealtimeBadge(String icon, String value) {
+  Widget _buildRealtimeBadge(String icon, String value, bool isDarkMode) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
+        color: isDarkMode ? Colors.grey.shade800 : Colors.white.withOpacity(0.2),
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -487,7 +526,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
           Text(
             value,
             style: TextStyle(
-              color: Colors.white,
+              color: isDarkMode ? Colors.white : Colors.white,
               fontSize: 13,
               fontWeight: FontWeight.bold,
             ),
@@ -497,24 +536,24 @@ class _HistoryScreenState extends State<HistoryScreen> {
     );
   }
 
-  Widget _buildHistoryList() {
+  Widget _buildHistoryList(bool isDarkMode) {
     return ListView.separated(
       itemCount: _logs.length,
       separatorBuilder: (context, index) => const SizedBox(height: 12),
       itemBuilder: (context, index) {
-        return _buildHistoryItem(_logs[index]);
+        return _buildHistoryItem(_logs[index], isDarkMode);
       },
     );
   }
 
-  Widget _buildHistoryItem(LogEntry log) {
+  Widget _buildHistoryItem(LogEntry log, bool isDarkMode) {
     final date = DateTime.fromMillisecondsSinceEpoch(log.timestamp);
     final timeFormat = DateFormat('HH:mm:ss');
     final dateFormat = DateFormat('yyyy/MM/dd');
     
     // Tentukan waktu dan warna
     final timeOfDayLabel = _getTimeOfDayLabel(date);
-    final cardColor = _getTimeOfDayColor(date);
+    final cardColor = _getTimeOfDayColor(date, isDarkMode);
 
     return Container(
       padding: const EdgeInsets.all(16),
@@ -523,11 +562,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
         borderRadius: BorderRadius.circular(12),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.1),
+            color: Colors.black.withOpacity(isDarkMode ? 0.2 : 0.1),
             blurRadius: 4,
             offset: const Offset(0, 2),
           ),
         ],
+        border: isDarkMode ? Border.all(color: Colors.grey.shade800) : null,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -539,12 +579,12 @@ class _HistoryScreenState extends State<HistoryScreen> {
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.2),
+                  color: isDarkMode ? Colors.grey.shade800 : Colors.white.withOpacity(0.2),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
                   log.operationMode == 'AUTO' ? Icons.auto_awesome : Icons.settings,
-                  color: Colors.white,
+                  color: isDarkMode ? _darkModePrimary : Colors.white,
                   size: 20,
                 ),
               ),
@@ -558,7 +598,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       style: TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
-                        color: Colors.white,
+                        color: isDarkMode ? Colors.white : Colors.white,
                       ),
                     ),
                     const SizedBox(height: 2),
@@ -566,7 +606,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                       '${log.pumpStatus == 'ON' ? 'Pompa: ON' : 'Pompa: OFF'}  Tanah: ${log.soilCategory ?? '-'}',
                       style: TextStyle(
                         fontSize: 11,
-                        color: Colors.white70,
+                        color: isDarkMode ? Colors.grey.shade400 : Colors.white70,
                       ),
                     ),
                   ],
@@ -578,7 +618,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Text(
                     timeFormat.format(date),
                     style: TextStyle(
-                      color: Colors.white,
+                      color: isDarkMode ? Colors.white : Colors.white,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -586,152 +626,157 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   Text(
                     dateFormat.format(date),
                     style: TextStyle(
-                      color: Colors.white70,
+                      color: isDarkMode ? Colors.grey.shade400 : Colors.white70,
                       fontSize: 10,
                     ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          
-          // Plant stage badge
-          Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-            decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.2),
-              borderRadius: BorderRadius.circular(6),
+                    ),
+                  ],
+                ),
+              ],
             ),
-            child: Text(
-              '${log.plantStage}',
+            const SizedBox(height: 12),
+            
+            // Plant stage badge
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: isDarkMode ? Colors.grey.shade800 : Colors.white.withOpacity(0.2),
+                borderRadius: BorderRadius.circular(6),
+              ),
+              child: Text(
+                '${log.plantStage}',
+                style: TextStyle(
+                  fontSize: 11,
+                  color: isDarkMode ? _darkModePrimary : Colors.white,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+            
+            // Sensor data badges
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
+                _buildSensorBadge('🌡️', '${log.temperature?.toStringAsFixed(1) ?? '-'}°C', isDarkMode),
+                _buildSensorBadge('💧', '${log.humidity?.toStringAsFixed(1) ?? '-'}%', isDarkMode),
+                _buildSensorBadge('🌱', '${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%', isDarkMode),
+                _buildSensorBadge('💡', '${log.brightness?.toStringAsFixed(1) ?? '-'}%', isDarkMode),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildSensorBadge(String icon, String value, bool isDarkMode) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey.shade800 : Colors.white.withOpacity(0.2),
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Row(
+          children: [
+            Text(icon, style: TextStyle(fontSize: 14)),
+            const SizedBox(width: 4),
+            Text(
+              value,
               style: TextStyle(
-                fontSize: 11,
-                color: Colors.white,
-                fontWeight: FontWeight.w500,
+                color: isDarkMode ? Colors.white : Colors.white,
+                fontSize: 12,
+                fontWeight: FontWeight.bold,
               ),
             ),
-          ),
-          const SizedBox(height: 12),
-          
-          // Sensor data badges
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: [
-              _buildSensorBadge('🌡️', '${log.temperature?.toStringAsFixed(1) ?? '-'}°C'),
-              _buildSensorBadge('💧', '${log.humidity?.toStringAsFixed(1) ?? '-'}%'),
-              _buildSensorBadge('🌱', '${log.soilMoisture?.toStringAsFixed(1) ?? '-'}%'),
-              _buildSensorBadge('💡', '${log.brightness?.toStringAsFixed(1) ?? '-'}%'),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
+          ],
+        ),
+      );
+    }
 
-  Widget _buildSensorBadge(String icon, String value) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-      decoration: BoxDecoration(
-        color: Colors.white.withOpacity(0.2),
-        borderRadius: BorderRadius.circular(16),
-      ),
-      child: Row(
-        children: [
-          Text(icon, style: TextStyle(fontSize: 14)),
-          const SizedBox(width: 4),
-          Text(
-            value,
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 12,
-              fontWeight: FontWeight.bold,
+    Widget _buildLoadingState(bool isDarkMode) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            CircularProgressIndicator(color: isDarkMode ? _darkModePrimary : _darkGreen),
+            const SizedBox(height: 16),
+            Text('Memuat data...', 
+              style: TextStyle(color: isDarkMode ? _darkModePrimary : _darkGreen)),
+          ],
+        ),
+      );
+    }
+
+    Widget _buildErrorState(bool isDarkMode) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.error_outline, size: 48, 
+              color: isDarkMode ? Colors.red.shade400 : _red),
+            const SizedBox(height: 16),
+            Text('Gagal memuat data', 
+              style: TextStyle(color: isDarkMode ? Colors.red.shade400 : _red)),
+            const SizedBox(height: 8),
+            ElevatedButton(
+              onPressed: _refreshData,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: isDarkMode ? _darkModePrimary : _darkGreen,
+                foregroundColor: Colors.white,
+              ),
+              child: const Text('Coba Lagi'),
             ),
-          ),
-        ],
-      ),
-    );
+          ],
+        ),
+      );
+    }
+
+    Widget _buildEmptyState(bool isDarkMode) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.inbox, size: 48, 
+              color: isDarkMode ? Colors.grey.shade600 : Colors.grey),
+            const SizedBox(height: 16),
+            Text('Belum ada data', 
+              style: TextStyle(color: isDarkMode ? Colors.grey.shade400 : Colors.grey)),
+          ],
+        ),
+      );
+    }
   }
 
-  Widget _buildLoadingState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          CircularProgressIndicator(color: _darkGreen),
-          const SizedBox(height: 16),
-          Text('Memuat data...', style: TextStyle(color: _darkGreen)),
-        ],
-      ),
-    );
+  class LogEntry {
+    final String id;
+    final int timestamp;
+    final double? temperature;
+    final double? humidity;
+    final double? soilMoisture;
+    final double? brightness;
+    final String? soilCategory;
+    final String operationMode;
+    final String pumpStatus;
+    final String plantStage;
+    final int? plantAge;
+    final String? timeOfDay;
+    final String? datetime;
+    final String? formattedDate;
+
+    LogEntry({
+      required this.id,
+      required this.timestamp,
+      this.temperature,
+      this.humidity,
+      this.soilMoisture,
+      this.brightness,
+      this.soilCategory,
+      required this.operationMode,
+      required this.pumpStatus,
+      required this.plantStage,
+      this.plantAge,
+      this.timeOfDay,
+      this.datetime,
+      this.formattedDate, 
+    });
   }
-
-  Widget _buildErrorState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.error_outline, size: 48, color: _red),
-          const SizedBox(height: 16),
-          Text('Gagal memuat data', style: TextStyle(color: _red)),
-          const SizedBox(height: 8),
-          ElevatedButton(
-            onPressed: _refreshData,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: _darkGreen,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Coba Lagi'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.inbox, size: 48, color: Colors.grey),
-          const SizedBox(height: 16),
-          Text('Belum ada data', style: TextStyle(color: Colors.grey)),
-        ],
-      ),
-    );
-  }
-}
-
-class LogEntry {
-  final String id;
-  final int timestamp;
-  final double? temperature;
-  final double? humidity;
-  final double? soilMoisture;
-  final double? brightness;
-  final String? soilCategory;
-  final String operationMode;
-  final String pumpStatus;
-  final String plantStage;
-  final int? plantAge;
-  final String? timeOfDay;
-  final String? datetime;
-  final String? formattedDate;
-
-  LogEntry({
-    required this.id,
-    required this.timestamp,
-    this.temperature,
-    this.humidity,
-    this.soilMoisture,
-    this.brightness,
-    this.soilCategory,
-    required this.operationMode,
-    required this.pumpStatus,
-    required this.plantStage,
-    this.plantAge,
-    this.timeOfDay,
-    this.datetime,
-    this.formattedDate, 
-  });
-}

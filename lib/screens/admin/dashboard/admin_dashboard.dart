@@ -479,7 +479,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.8,
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).colorScheme.surface,
         borderRadius: const BorderRadius.only(
           topLeft: Radius.circular(20),
           topRight: Radius.circular(20),
@@ -496,7 +496,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   style: TextStyle(
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
                 const Spacer(),
@@ -519,7 +519,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   onPressed: () => Navigator.pop(context),
                   icon: Icon(
                     Icons.close,
-                    color: Colors.black87,
+                    color: Theme.of(context).colorScheme.onSurface,
                   ),
                 ),
               ],
@@ -578,6 +578,8 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   }
 
   Widget _buildNotificationItem(AdminNotificationItem notification) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    
     return GestureDetector(
       onTap: () {
         if (!notification.isRead) {
@@ -589,7 +591,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
           color: notification.isRead 
-              ? Colors.grey[50]
+              ? (isDarkMode ? Colors.grey[900]! : Colors.grey[50]!)
               : _primaryColor.withOpacity(0.1),
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
@@ -622,7 +624,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: TextStyle(
                       fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
                       fontSize: 14,
-                      color: Colors.black87,
+                      color: Theme.of(context).colorScheme.onSurface,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -630,7 +632,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     notification.message,
                     style: TextStyle(
                       fontSize: 12, 
-                      color: Colors.black54,
+                      color: Theme.of(context).colorScheme.onSurface.withOpacity(0.7),
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -698,10 +700,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   @override
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
+    final backgroundColor = isDarkMode ? Colors.grey[900]! : Colors.white;
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final cardColor = isDarkMode ? Colors.grey[800]! : Colors.white;
+    final subtitleColor = isDarkMode ? Colors.grey[400]! : Colors.grey[600]!;
     
     if (_isLoading) {
       return Scaffold(
-        backgroundColor: Colors.white,
+        backgroundColor: backgroundColor,
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -734,7 +741,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 'Memuat dashboard...',
                 style: TextStyle(
                   fontSize: 14, 
-                  color: Colors.grey,
+                  color: subtitleColor,
                 ),
               ),
             ],
@@ -744,7 +751,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: backgroundColor,
       body: SafeArea(
         child: RefreshIndicator(
           onRefresh: () async {
@@ -771,15 +778,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                _buildHeader(),
+                _buildHeader(isDarkMode, textColor, subtitleColor),
                 const SizedBox(height: 24),
-                _buildStatsGrid(),
+                _buildStatsGrid(isDarkMode, cardColor, textColor, subtitleColor),
                 const SizedBox(height: 24),
-                _buildSensorGrid(),
+                _buildSensorGrid(isDarkMode, cardColor, textColor, subtitleColor),
                 const SizedBox(height: 24),
-                _buildSystemStatus(),
+                _buildSystemStatus(isDarkMode, cardColor, textColor),
                 const SizedBox(height: 24),
-                _buildCriticalAlertsSection(),
+                _buildCriticalAlertsSection(isDarkMode, cardColor, textColor, subtitleColor),
               ],
             ),
           ),
@@ -788,7 +795,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(bool isDarkMode, Color textColor, Color subtitleColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -802,7 +809,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     'Dashboard Administrator',
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey[700],
+                      color: subtitleColor,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -811,7 +818,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     style: TextStyle(
                       fontSize: 24,
                       fontWeight: FontWeight.bold,
-                      color: Colors.black,
+                      color: textColor,
                     ),
                   ),
                 ],
@@ -867,14 +874,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           'Overview sistem dan monitoring semua lahan tomat',
           style: TextStyle(
             fontSize: 14,
-            color: Colors.grey[600],
+            color: subtitleColor,
           ),
         ),
       ],
     );
   }
 
-  Widget _buildStatsGrid() {
+  Widget _buildStatsGrid(bool isDarkMode, Color cardColor, Color textColor, Color subtitleColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -891,7 +898,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: textColor,
               ),
             ),
           ],
@@ -1054,7 +1061,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildSensorGrid() {
+  Widget _buildSensorGrid(bool isDarkMode, Color cardColor, Color textColor, Color subtitleColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1071,7 +1078,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: textColor,
               ),
             ),
           ],
@@ -1247,13 +1254,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildSystemStatus() {
+  Widget _buildSystemStatus(bool isDarkMode, Color cardColor, Color textColor) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: const Color(0xFF1A237E),
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        boxShadow: isDarkMode ? [] : [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
@@ -1288,6 +1295,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 statusColor: actuatorData['pump'] ? Colors.green : Colors.red,
                 mode: actuatorData['autoMode'] ? 'Auto' : 'Manual',
                 iconColor: Colors.blue,
+                isDarkMode: isDarkMode,
               ),
               const SizedBox(width: 12),
               _buildSystemItem(
@@ -1297,6 +1305,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 statusColor: actuatorData['light'] ? Colors.green : Colors.red,
                 mode: actuatorData['autoMode'] ? 'Auto' : 'Manual',
                 iconColor: Colors.yellow,
+                isDarkMode: isDarkMode,
               ),
               const SizedBox(width: 12),
               _buildSystemItem(
@@ -1309,6 +1318,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                     actuatorData['autoMode'] ? Colors.blue : Colors.orange,
                 mode: 'Aktif',
                 iconColor: Colors.green,
+                isDarkMode: isDarkMode,
               ),
             ],
           ),
@@ -1353,14 +1363,15 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     required Color statusColor,
     required String mode,
     Color? iconColor,
+    required bool isDarkMode,
   }) {
     return Expanded(
       child: Container(
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDarkMode ? Colors.grey[800]! : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          boxShadow: [
+          boxShadow: isDarkMode ? [] : [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),
               blurRadius: 4,
@@ -1373,20 +1384,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Container(
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
-                color: Colors.grey[200],
+                color: isDarkMode ? Colors.grey[700]! : Colors.grey[200]!,
                 shape: BoxShape.circle,
               ),
               child: Icon(icon,
-                  color: iconColor ?? Colors.grey[700],
+                  color: iconColor ?? (isDarkMode ? Colors.white : Colors.grey[700]!),
                   size: 24),
             ),
             const SizedBox(height: 8),
             Text(
               title,
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 12,
                 fontWeight: FontWeight.w500,
-                color: Colors.black87,
+                color: isDarkMode ? Colors.white : Colors.black87,
               ),
               textAlign: TextAlign.center,
             ),
@@ -1403,14 +1414,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: isDarkMode ? Colors.grey[700]! : Colors.grey[100]!,
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 mode,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 10,
-                  color: Colors.grey,
+                  color: isDarkMode ? Colors.grey[300]! : Colors.grey,
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -1421,13 +1432,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     );
   }
 
-  Widget _buildCriticalAlertsSection() {
+  Widget _buildCriticalAlertsSection(bool isDarkMode, Color cardColor, Color textColor, Color subtitleColor) {
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(12),
-        boxShadow: [
+        boxShadow: isDarkMode ? [] : [
           BoxShadow(
             color: Colors.black.withOpacity(0.1),
             blurRadius: 8,
@@ -1508,7 +1519,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                         'Semua sistem berjalan normal',
                         style: TextStyle(
                           fontSize: 12,
-                          color: Colors.grey,
+                          color: subtitleColor,
                         ),
                       ),
                     ],
@@ -1516,14 +1527,14 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 )
               : Column(
                   children: _criticalAlertsList.map((alert) => 
-                    _buildAlertItem(alert)).toList(),
+                    _buildAlertItem(alert, isDarkMode, textColor, subtitleColor)).toList(),
                 ),
         ],
       ),
     );
   }
 
-  Widget _buildAlertItem(Map<String, dynamic> alert) {
+  Widget _buildAlertItem(Map<String, dynamic> alert, bool isDarkMode, Color textColor, Color subtitleColor) {
     final severity = alert['severity'];
     final color = _getSeverityColor(severity);
     final timeAgo = _formatTimeAgo(alert['timestamp']);
@@ -1555,10 +1566,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Expanded(
                 child: Text(
                   alert['title'],
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 14,
                     fontWeight: FontWeight.bold,
-                    color: Colors.black87,
+                    color: textColor,
                   ),
                 ),
               ),
@@ -1582,9 +1593,9 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
           const SizedBox(height: 4),
           Text(
             alert['message'],
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 12, 
-              color: Colors.black54,
+              color: subtitleColor,
             ),
           ),
           const SizedBox(height: 4),

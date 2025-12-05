@@ -105,22 +105,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showEditNameDialog() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    
     final TextEditingController nameController =
         TextEditingController(text: _userName);
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
             Icon(Icons.edit, color: _primaryColor),
             const SizedBox(width: 8),
-            const Text(
+            Text(
               'Edit Nama',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: Colors.black,
+                color: isDarkMode ? Colors.white : Colors.black,
               ),
             ),
           ],
@@ -130,14 +133,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
           children: [
             TextField(
               controller: nameController,
+              style: TextStyle(
+                color: isDarkMode ? Colors.white : Colors.black,
+              ),
               decoration: InputDecoration(
                 labelText: 'Nama',
+                labelStyle: TextStyle(
+                  color: isDarkMode ? Colors.grey.shade400 : null,
+                ),
                 hintText: 'Masukkan nama Anda',
+                hintStyle: TextStyle(
+                  color: isDarkMode ? Colors.grey.shade600 : null,
+                ),
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(8),
+                  borderSide: BorderSide(
+                    color: isDarkMode ? Colors.grey.shade700 : Colors.grey,
+                  ),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderSide: BorderSide(color: _primaryColor),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                enabledBorder: OutlineInputBorder(
+                  borderSide: BorderSide(
+                    color: isDarkMode ? Colors.grey.shade700 : Colors.grey,
+                  ),
                   borderRadius: BorderRadius.circular(8),
                 ),
               ),
@@ -148,7 +169,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Nama akan ditampilkan di profil dan aplikasi',
               style: TextStyle(
                 fontSize: 12,
-                color: Colors.grey.shade600,
+                color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600,
               ),
             ),
           ],
@@ -159,7 +180,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text(
               'Batal',
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
               ),
             ),
           ),
@@ -217,7 +238,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor:
-            isDarkMode ? Theme.of(context).colorScheme.surface : Colors.white,
+            isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
             Icon(Icons.agriculture, color: _primaryColor),
@@ -226,9 +247,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               'Tentang TomaFarm',
               style: TextStyle(
                 fontWeight: FontWeight.bold,
-                color: isDarkMode
-                    ? Theme.of(context).colorScheme.onSurface
-                    : Colors.black,
+                color: isDarkMode ? Colors.white : Colors.black,
               ),
             ),
           ],
@@ -272,12 +291,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 'Dilengkapi dengan berbagai fitur canggih untuk memastikan tanaman tomat tumbuh optimal.',
                 style: TextStyle(
                   height: 1.5,
-                  color: isDarkMode
-                      ? Theme.of(context)
-                          .colorScheme
-                          .onSurface
-                          .withOpacity(0.87)
-                      : Colors.black87,
+                  color: isDarkMode ? Colors.grey.shade300 : Colors.black87,
                 ),
               ),
               const SizedBox(height: 16),
@@ -285,27 +299,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 '🎯 Fitur Utama:',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
-                  color: isDarkMode
-                      ? Theme.of(context).colorScheme.onSurface
-                      : Colors.black,
+                  color: isDarkMode ? Colors.white : Colors.black,
                 ),
               ),
               const SizedBox(height: 8),
-              _buildFeatureItem(
-                  '📊 Monitoring real-time sensor', isDarkMode, context),
-              _buildFeatureItem(
-                  '💧 Kontrol otomatis pompa air', isDarkMode, context),
-              _buildFeatureItem('💡 Kontrol lampu tumbuh', isDarkMode, context),
-              _buildFeatureItem(
-                  '📈 Riwayat data dan grafik', isDarkMode, context),
-              _buildFeatureItem('🔔 Notifikasi cerdas', isDarkMode, context),
+              _buildFeatureItem('📊 Monitoring real-time sensor', isDarkMode),
+              _buildFeatureItem('💧 Kontrol otomatis pompa air', isDarkMode),
+              _buildFeatureItem('💡 Kontrol lampu tumbuh', isDarkMode),
+              _buildFeatureItem('📈 Riwayat data dan grafik', isDarkMode),
+              _buildFeatureItem('🔔 Notifikasi cerdas', isDarkMode),
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: isDarkMode
-                      ? Theme.of(context).colorScheme.surfaceVariant
-                      : Colors.grey.shade100,
+                  color: isDarkMode ? const Color(0xFF2D2D2D) : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(8),
                 ),
                 child: Column(
@@ -316,9 +323,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         fontSize: 12,
-                        color: isDarkMode
-                            ? Theme.of(context).colorScheme.onSurface
-                            : Colors.black,
+                        color: isDarkMode ? Colors.white : Colors.black,
                       ),
                     ),
                     const SizedBox(height: 4),
@@ -326,9 +331,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       'Versi: 1.0.0\nBuild: 2024.12.01\nDikembangkan untuk Project Based Learning',
                       style: TextStyle(
                         fontSize: 11,
-                        color: isDarkMode
-                            ? Theme.of(context).colorScheme.onSurfaceVariant
-                            : Colors.grey,
+                        color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
                       ),
                     ),
                   ],
@@ -352,7 +355,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildFeatureItem(String text, bool isDarkMode, BuildContext context) {
+  Widget _buildFeatureItem(String text, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 2),
       child: Row(
@@ -364,9 +367,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               text,
               style: TextStyle(
                 fontSize: 13,
-                color: isDarkMode
-                    ? Theme.of(context).colorScheme.onSurface.withOpacity(0.87)
-                    : Colors.black87,
+                color: isDarkMode ? Colors.grey.shade300 : Colors.black87,
               ),
             ),
           ),
@@ -376,10 +377,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showLogoutConfirmation() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
+    
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
             Icon(Icons.logout, color: _accentColor),
@@ -387,7 +391,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text(
               'Konfirmasi Logout',
               style: TextStyle(
-                color: Colors.black,
+                color: isDarkMode ? Colors.white : Colors.black,
               ),
             ),
           ],
@@ -395,7 +399,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         content: Text(
           'Apakah Anda yakin ingin logout dari akun Anda?',
           style: TextStyle(
-            color: Colors.black87,
+            color: isDarkMode ? Colors.grey.shade300 : Colors.black87,
           ),
         ),
         actions: [
@@ -404,7 +408,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Text(
               'Batal',
               style: TextStyle(
-                color: Colors.grey.shade700,
+                color: isDarkMode ? Colors.grey.shade400 : Colors.grey.shade700,
               ),
             ),
           ),
@@ -448,12 +452,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   void _showAccountInfo() {
+    final themeProvider = Provider.of<ThemeProvider>(context, listen: false);
+    final isDarkMode = themeProvider.isDarkMode;
     final user = _auth.currentUser;
 
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: Colors.white,
+        backgroundColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
         title: Row(
           children: [
             Icon(Icons.person, color: _blueColor),
@@ -461,7 +467,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             Text(
               'Informasi Akun',
               style: TextStyle(
-                color: Colors.black,
+                color: isDarkMode ? Colors.white : Colors.black,
               ),
             ),
           ],
@@ -470,13 +476,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildAccountInfoItem('Nama', _userName),
-            _buildAccountInfoItem('Email', user?.email ?? 'Tidak tersedia'),
+            _buildAccountInfoItem('Nama', _userName, isDarkMode),
+            _buildAccountInfoItem('Email', user?.email ?? 'Tidak tersedia', isDarkMode),
             _buildAccountInfoItem(
               'Bergabung',
               user?.metadata.creationTime != null
                   ? '${DateTime.now().difference(user!.metadata.creationTime!).inDays} hari yang lalu'
                   : 'Tidak tersedia',
+              isDarkMode,
             ),
           ],
         ),
@@ -495,7 +502,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
-  Widget _buildAccountInfoItem(String label, String value) {
+  Widget _buildAccountInfoItem(String label, String value, bool isDarkMode) {
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 6),
       child: Column(
@@ -505,7 +512,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             label,
             style: TextStyle(
               fontSize: 12,
-              color: Colors.grey,
+              color: isDarkMode ? Colors.grey.shade400 : Colors.grey,
               fontWeight: FontWeight.w500,
             ),
           ),
@@ -514,7 +521,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w500,
-              color: Colors.black,
+              color: isDarkMode ? Colors.white : Colors.black,
             ),
           ),
         ],
@@ -524,11 +531,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
+    final themeProvider = Provider.of<ThemeProvider>(context);
+    final isDarkMode = themeProvider.isDarkMode;
     final user = _auth.currentUser;
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: isDarkMode ? const Color(0xFF121212) : Colors.white,
       body: SafeArea(
         child: SingleChildScrollView(
           physics: const AlwaysScrollableScrollPhysics(),
@@ -543,7 +551,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.black.withOpacity(0.1),
+                      color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
                       blurRadius: 15,
                       offset: const Offset(0, 6),
                     ),
@@ -642,16 +650,18 @@ class _SettingsScreenState extends State<SettingsScreen> {
               // Settings List
               Container(
                 decoration: BoxDecoration(
-                  color: theme.cardColor,
+                  color: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
                   borderRadius: BorderRadius.circular(20),
                   boxShadow: [
                     BoxShadow(
-                      color: Colors.grey.withOpacity(0.2),
+                      color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.2),
                       blurRadius: 15,
                       offset: const Offset(0, 5),
                     ),
                   ],
-                  border: Border.all(color: Colors.grey.withOpacity(0.1)),
+                  border: Border.all(
+                    color: isDarkMode ? Colors.grey.shade800 : Colors.grey.withOpacity(0.1)
+                  ),
                 ),
                 child: Column(
                   children: [
@@ -666,7 +676,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                             style: TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
-                              color: _primaryColor,
+                              color: isDarkMode ? Colors.white : _primaryColor,
                             ),
                           ),
                         ],
@@ -676,18 +686,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       icon: Icons.notifications_active,
                       title: 'Notifikasi Sistem',
                       subtitle: 'Terima notifikasi kondisi tanaman',
+                      titleColor: isDarkMode ? Colors.white : null,
+                      subtitleColor: isDarkMode ? Colors.grey.shade400 : null,
                       trailing: Switch(
                         value: _notificationsEnabled,
                         onChanged: _toggleNotifications,
                         activeColor: _primaryColor,
                         activeTrackColor: _primaryColor.withOpacity(0.3),
                       ),
+                      isDarkMode: isDarkMode,
                     ),
-                    const Divider(height: 1, indent: 20),
+                    const Divider(
+                      height: 1,
+                      indent: 20,
+                      color: Color(0xFFE0E0E0),
+                    ),
                     _buildSettingItem(
                       icon: Icons.dark_mode,
                       title: 'Mode Gelap',
                       subtitle: 'Tampilan tema gelap',
+                      titleColor: isDarkMode ? Colors.white : null,
+                      subtitleColor: isDarkMode ? Colors.grey.shade400 : null,
                       trailing: Consumer<ThemeProvider>(
                         builder: (context, themeProvider, _) {
                           return Switch(
@@ -702,36 +721,52 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           );
                         },
                       ),
+                      isDarkMode: isDarkMode,
                     ),
-                    const Divider(height: 1, indent: 20),
+                    const Divider(
+                      height: 1,
+                      indent: 20,
+                      color: Color(0xFFE0E0E0),
+                    ),
                     _buildSettingItem(
                       icon: Icons.refresh,
                       title: 'Auto Refresh',
                       subtitle: 'Refresh data otomatis',
+                      titleColor: isDarkMode ? Colors.white : null,
+                      subtitleColor: isDarkMode ? Colors.grey.shade400 : null,
                       trailing: Switch(
                         value: _autoRefreshEnabled,
                         onChanged: _toggleAutoRefresh,
                         activeColor: _secondaryColor,
                         activeTrackColor: _secondaryColor.withOpacity(0.3),
                       ),
+                      isDarkMode: isDarkMode,
                     ),
-                    const Divider(height: 1, indent: 20),
+                    const Divider(
+                      height: 1,
+                      indent: 20,
+                      color: Color(0xFFE0E0E0),
+                    ),
                     _buildSettingItem(
                       icon: Icons.language,
                       title: 'Bahasa',
                       subtitle: 'Bahasa Indonesia',
+                      titleColor: isDarkMode ? Colors.white : null,
+                      subtitleColor: isDarkMode ? Colors.grey.shade400 : null,
                       trailing: Container(
                         padding: const EdgeInsets.symmetric(
                             horizontal: 8, vertical: 4),
                         decoration: BoxDecoration(
-                          color: _primaryColor.withOpacity(0.1),
+                          color: isDarkMode 
+                            ? _primaryColor.withOpacity(0.2)
+                            : _primaryColor.withOpacity(0.1),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Text(
                           'ID',
                           style: TextStyle(
                             fontSize: 12,
-                            color: _primaryColor,
+                            color: isDarkMode ? _primaryColor : _primaryColor,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -739,14 +774,25 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       onTap: () {
                         _showSnackBar('Bahasa Indonesia aktif');
                       },
+                      isDarkMode: isDarkMode,
                     ),
-                    const Divider(height: 1, indent: 20),
+                    const Divider(
+                      height: 1,
+                      indent: 20,
+                      color: Color(0xFFE0E0E0),
+                    ),
                     _buildSettingItem(
                       icon: Icons.info_outline,
                       title: 'Tentang Aplikasi',
                       subtitle: 'Versi 1.0.0',
-                      trailing: Icon(Icons.chevron_right, color: Colors.grey),
+                      titleColor: isDarkMode ? Colors.white : null,
+                      subtitleColor: isDarkMode ? Colors.grey.shade400 : null,
+                      trailing: Icon(
+                        Icons.chevron_right, 
+                        color: isDarkMode ? Colors.grey.shade400 : Colors.grey
+                      ),
                       onTap: _showAboutDialog,
+                      isDarkMode: isDarkMode,
                     ),
                   ],
                 ),
@@ -801,15 +847,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
     required IconData icon,
     required String title,
     required String subtitle,
+    Color? titleColor,
+    Color? subtitleColor,
     required Widget trailing,
     VoidCallback? onTap,
+    required bool isDarkMode,
   }) {
-    final theme = Theme.of(context);
     return ListTile(
       leading: Container(
         padding: const EdgeInsets.all(10),
         decoration: BoxDecoration(
-          color: _primaryColor.withOpacity(0.1),
+          color: isDarkMode 
+            ? _primaryColor.withOpacity(0.2)
+            : _primaryColor.withOpacity(0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: _primaryColor, size: 22),
@@ -819,19 +869,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
         style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
-          color: theme.colorScheme.onSurface,
+          color: titleColor ?? (isDarkMode ? Colors.white : Colors.black),
         ),
       ),
       subtitle: Text(
         subtitle,
         style: TextStyle(
           fontSize: 13,
-          color: theme.colorScheme.onSurface.withOpacity(0.6),
+          color: subtitleColor ?? (isDarkMode ? Colors.grey.shade400 : Colors.grey.shade600),
         ),
       ),
       trailing: trailing,
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
+      tileColor: isDarkMode ? const Color(0xFF1E1E1E) : Colors.white,
     );
   }
 }

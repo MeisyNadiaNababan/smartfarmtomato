@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_database/firebase_database.dart';
+import 'package:provider/provider.dart';
+import '../../../providers/theme_provider.dart';
 
 class AdminLandsScreen extends StatefulWidget {
   const AdminLandsScreen({super.key});
@@ -123,39 +125,47 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final cardColor = isDarkMode ? Colors.grey[800]! : Colors.white;
+    final scaffoldBgColor = isDarkMode ? Colors.grey[900]! : const Color(0xffF6F7FB);
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final secondaryTextColor = isDarkMode ? Colors.grey[400]! : Colors.black54;
+    final inputBgColor = isDarkMode ? Colors.grey[800]! : const Color(0xffF2F4F7);
+    final shadowColor = isDarkMode ? Colors.black : Colors.black12;
+
     return Scaffold(
-      backgroundColor: const Color(0xffF6F7FB),
+      backgroundColor: scaffoldBgColor,
       body: Column(
         children: [
-          _header(),
-          _table(),
+          _header(isDarkMode, cardColor, textColor, secondaryTextColor, inputBgColor, shadowColor),
+          _table(isDarkMode, cardColor, textColor, secondaryTextColor, shadowColor),
         ],
       ),
     );
   }
 
   // ================= HEADER =================
-  Widget _header() {
+  Widget _header(bool isDarkMode, Color cardColor, Color textColor, Color secondaryTextColor, Color inputBgColor, Color shadowColor) {
     return Container(
       padding: const EdgeInsets.fromLTRB(16, 16, 16, 14),
-      decoration: const BoxDecoration(
-        color: Colors.white,
+      decoration: BoxDecoration(
+        color: cardColor,
         boxShadow: [
-          BoxShadow(color: Colors.black12, blurRadius: 6),
+          BoxShadow(color: shadowColor, blurRadius: 6),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             "Manajemen Lahan",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700, color: textColor),
           ),
 
           const SizedBox(height: 4),
-          const Text(
+          Text(
             "Kelola data lahan pertanian",
-            style: TextStyle(color: Colors.black54),
+            style: TextStyle(color: secondaryTextColor),
           ),
 
           const SizedBox(height: 16),
@@ -169,14 +179,16 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
                   onChanged: _search,
                   decoration: InputDecoration(
                     hintText: "Search...",
-                    prefixIcon: const Icon(Icons.search),
+                    hintStyle: TextStyle(color: secondaryTextColor),
+                    prefixIcon: Icon(Icons.search, color: secondaryTextColor),
                     filled: true,
-                    fillColor: const Color(0xffF2F4F7),
+                    fillColor: inputBgColor,
                     border: OutlineInputBorder(
                       borderRadius: BorderRadius.circular(14),
                       borderSide: BorderSide.none,
                     ),
                   ),
+                  style: TextStyle(color: textColor),
                 ),
               ),
               const SizedBox(width: 12),
@@ -203,24 +215,24 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
   }
 
   // ================= TABLE =================
-  Widget _table() {
+  Widget _table(bool isDarkMode, Color cardColor, Color textColor, Color secondaryTextColor, Color shadowColor) {
     return Expanded(
       child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 8, 16, 12),
         child: Column(
           children: [
-            _tableHeader(),
+            _tableHeader(isDarkMode, cardColor, shadowColor, secondaryTextColor),
             Expanded(
               child: filtered.isEmpty
-                  ? const Center(
+                  ? Center(
                       child: Text(
                         "Tidak ada data lahan",
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
+                        style: TextStyle(color: secondaryTextColor, fontSize: 16),
                       ),
                     )
                   : ListView.builder(
                       itemCount: filtered.length,
-                      itemBuilder: (_, i) => _row(filtered[i]),
+                      itemBuilder: (_, i) => _row(filtered[i], isDarkMode, cardColor, textColor, shadowColor),
                     ),
             ),
           ],
@@ -230,46 +242,46 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
   }
 
   // ================= HEADER TABLE =================
-  Widget _tableHeader() {
+  Widget _tableHeader(bool isDarkMode, Color cardColor, Color shadowColor, Color textColor) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       margin: const EdgeInsets.only(bottom: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 4),
+        boxShadow: [
+          BoxShadow(color: shadowColor, blurRadius: 4),
         ],
       ),
-      child: const Row(
+      child: Row(
         children: [
-          _Col("Nama Lahan", 3),
-          _Col("Luas", 1),
-          _Col("Petani", 2),
-          _Col("Lokasi", 2),
-          _Col("Aksi", 2, center: true),
+          _Col("Nama Lahan", 3, textColor: textColor),
+          _Col("Luas", 1, textColor: textColor),
+          _Col("Petani", 2, textColor: textColor),
+          _Col("Lokasi", 2, textColor: textColor),
+          _Col("Aksi", 2, center: true, textColor: textColor),
         ],
       ),
     );
   }
 
   // ================= ROW =================
-  Widget _row(Map<String, dynamic> data) {
+  Widget _row(Map<String, dynamic> data, bool isDarkMode, Color cardColor, Color textColor, Color shadowColor) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 14),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: cardColor,
         borderRadius: BorderRadius.circular(14),
-        boxShadow: const [
-          BoxShadow(color: Colors.black12, blurRadius: 3),
+        boxShadow: [
+          BoxShadow(color: shadowColor, blurRadius: 3),
         ],
       ),
       child: Row(children: [
-        _Text(data["name"], 3),
-        _Text(data["luas"], 1),
-        _Text(data["owner"], 2),
-        _Text(data["location"], 2),
+        _Text(data["name"], 3, textColor: textColor),
+        _Text(data["luas"], 1, textColor: textColor),
+        _Text(data["owner"], 2, textColor: textColor),
+        _Text(data["location"], 2, textColor: textColor),
         Expanded(
           flex: 2,
           child: Row(
@@ -315,6 +327,12 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
 
   // ================= ADD DIALOG =================
   void _showAddDialog() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final dialogBgColor = isDarkMode ? Colors.grey[900]! : Colors.white;
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final hintColor = isDarkMode ? Colors.grey[400]! : const Color(0xff98A2B3);
+    final inputBgColor = isDarkMode ? Colors.grey[800]! : const Color(0xffF2F4F7);
+    
     final namaCtrl = TextEditingController();
     final luasCtrl = TextEditingController();
     final lokasiCtrl = TextEditingController();
@@ -324,6 +342,7 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
       context: context,
       builder: (_) => StatefulBuilder(builder: (_, setLocal) {
         return Dialog(
+          backgroundColor: dialogBgColor,
           insetPadding: const EdgeInsets.symmetric(horizontal: 40),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: ConstrainedBox(
@@ -334,43 +353,67 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       "Tambah Lahan",
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700, 
+                        fontSize: 18,
+                        color: textColor,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    _input("Nama Lahan", namaCtrl),
+                    _input("Nama Lahan", namaCtrl, 
+                      isDarkMode: isDarkMode, 
+                      textColor: textColor, 
+                      hintColor: hintColor, 
+                      inputBgColor: inputBgColor
+                    ),
                     const SizedBox(height: 10),
-                    _input("Luas (ha)", luasCtrl, keyboard: TextInputType.number),
+                    _input("Luas (ha)", luasCtrl, 
+                      keyboard: TextInputType.number,
+                      isDarkMode: isDarkMode, 
+                      textColor: textColor, 
+                      hintColor: hintColor, 
+                      inputBgColor: inputBgColor
+                    ),
                     const SizedBox(height: 10),
 
-                    // ================= REVISI DROPDOWN TAMBAH =================
+                    // DROPDOWN TAMBAH
                     DropdownButtonFormField<String>(
                       value: selectedPetani,
-                      hint: const Text("Pilih Petani"),
+                      hint: Text("Pilih Petani", style: TextStyle(color: hintColor)),
+                      dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                      icon: Icon(Icons.arrow_drop_down, color: hintColor),
+                      style: TextStyle(color: textColor),
                       items: petaniDropdown
                           .map(
                             (p) => DropdownMenuItem<String>(
                               value: p,
-                              child: Text(p),
+                              child: Text(p, style: TextStyle(color: textColor)),
                             ),
                           )
                           .toList(),
                       onChanged: (v) => setLocal(() => selectedPetani = v),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: const Color(0xffF2F4F7),
+                        fillColor: inputBgColor,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 14),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
                         ),
+                        hintStyle: TextStyle(color: hintColor),
                       ),
                     ),
 
                     const SizedBox(height: 10),
-                    _input("Lokasi", lokasiCtrl),
+                    _input("Lokasi", lokasiCtrl, 
+                      isDarkMode: isDarkMode, 
+                      textColor: textColor, 
+                      hintColor: hintColor, 
+                      inputBgColor: inputBgColor
+                    ),
                     const SizedBox(height: 20),
 
                     Row(
@@ -461,16 +504,22 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
 
   // ================= EDIT DIALOG =================
   void _showEditDialog(Map<String, dynamic> data) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final dialogBgColor = isDarkMode ? Colors.grey[900]! : Colors.white;
+    final textColor = isDarkMode ? Colors.white : Colors.black;
+    final hintColor = isDarkMode ? Colors.grey[400]! : const Color(0xff98A2B3);
+    final inputBgColor = isDarkMode ? Colors.grey[800]! : const Color(0xffF2F4F7);
+    
     final namaCtrl = TextEditingController(text: data["name"]);
     final luasCtrl = TextEditingController(text: data["luas"]);
     final lokasiCtrl = TextEditingController(text: data["location"]);
-    String? selectedPetani =
-        data["owner"] == "-" ? null : data["owner"];
+    String? selectedPetani = data["owner"] == "-" ? null : data["owner"];
 
     showDialog(
       context: context,
       builder: (_) => StatefulBuilder(builder: (_, setLocal) {
         return Dialog(
+          backgroundColor: dialogBgColor,
           insetPadding: const EdgeInsets.symmetric(horizontal: 40),
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
           child: ConstrainedBox(
@@ -481,43 +530,67 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Text(
+                    Text(
                       "Edit Lahan",
-                      style: TextStyle(fontWeight: FontWeight.w700, fontSize: 18),
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700, 
+                        fontSize: 18,
+                        color: textColor,
+                      ),
                     ),
                     const SizedBox(height: 16),
-                    _input("Nama Lahan", namaCtrl),
+                    _input("Nama Lahan", namaCtrl, 
+                      isDarkMode: isDarkMode, 
+                      textColor: textColor, 
+                      hintColor: hintColor, 
+                      inputBgColor: inputBgColor
+                    ),
                     const SizedBox(height: 10),
-                    _input("Luas (ha)", luasCtrl, keyboard: TextInputType.number),
+                    _input("Luas (ha)", luasCtrl, 
+                      keyboard: TextInputType.number,
+                      isDarkMode: isDarkMode, 
+                      textColor: textColor, 
+                      hintColor: hintColor, 
+                      inputBgColor: inputBgColor
+                    ),
                     const SizedBox(height: 10),
 
-                    // ================= REVISI DROPDOWN EDIT =================
+                    // DROPDOWN EDIT
                     DropdownButtonFormField<String>(
                       value: selectedPetani,
-                      hint: const Text("Pilih Petani"),
+                      hint: Text("Pilih Petani", style: TextStyle(color: hintColor)),
+                      dropdownColor: isDarkMode ? Colors.grey[800] : Colors.white,
+                      icon: Icon(Icons.arrow_drop_down, color: hintColor),
+                      style: TextStyle(color: textColor),
                       items: petaniDropdown
                           .map(
                             (p) => DropdownMenuItem<String>(
                               value: p,
-                              child: Text(p),
+                              child: Text(p, style: TextStyle(color: textColor)),
                             ),
                           )
                           .toList(),
                       onChanged: (v) => setLocal(() => selectedPetani = v),
                       decoration: InputDecoration(
                         filled: true,
-                        fillColor: const Color(0xffF2F4F7),
+                        fillColor: inputBgColor,
                         contentPadding: const EdgeInsets.symmetric(
                             horizontal: 12, vertical: 14),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(14),
                           borderSide: BorderSide.none,
                         ),
+                        hintStyle: TextStyle(color: hintColor),
                       ),
                     ),
 
                     const SizedBox(height: 10),
-                    _input("Lokasi", lokasiCtrl),
+                    _input("Lokasi", lokasiCtrl, 
+                      isDarkMode: isDarkMode, 
+                      textColor: textColor, 
+                      hintColor: hintColor, 
+                      inputBgColor: inputBgColor
+                    ),
                     const SizedBox(height: 20),
 
                     Row(
@@ -611,6 +684,10 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
     String hint,
     TextEditingController ctrl, {
     TextInputType keyboard = TextInputType.text,
+    required bool isDarkMode,
+    required Color textColor,
+    required Color hintColor,
+    required Color inputBgColor,
   }) {
     return SizedBox(
       width: double.infinity,
@@ -618,13 +695,12 @@ class _AdminLandsScreenState extends State<AdminLandsScreen> {
       child: TextField(
         controller: ctrl,
         keyboardType: keyboard,
+        style: TextStyle(color: textColor),
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: const TextStyle(
-            color: Color(0xff98A2B3),
-          ),
+          hintStyle: TextStyle(color: hintColor),
           filled: true,
-          fillColor: const Color(0xffF2F4F7),
+          fillColor: inputBgColor,
           contentPadding:
               const EdgeInsets.symmetric(horizontal: 14, vertical: 14),
           border: OutlineInputBorder(
@@ -642,8 +718,9 @@ class _Col extends StatelessWidget {
   final String t;
   final int f;
   final bool center;
+  final Color textColor;
 
-  const _Col(this.t, this.f, {this.center = false});
+  const _Col(this.t, this.f, {this.center = false, required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -652,10 +729,10 @@ class _Col extends StatelessWidget {
       child: Text(
         t,
         textAlign: center ? TextAlign.center : TextAlign.start,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
           fontWeight: FontWeight.w600,
-          color: Color(0xff667085),
+          color: textColor,
         ),
       ),
     );
@@ -666,8 +743,9 @@ class _Col extends StatelessWidget {
 class _Text extends StatelessWidget {
   final String t;
   final int f;
+  final Color textColor;
 
-  const _Text(this.t, this.f);
+  const _Text(this.t, this.f, {required this.textColor});
 
   @override
   Widget build(BuildContext context) {
@@ -675,9 +753,9 @@ class _Text extends StatelessWidget {
       flex: f,
       child: Text(
         t,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 13,
-          color: Color(0xff344054),
+          color: textColor,
         ),
         overflow: TextOverflow.ellipsis,
       ),
