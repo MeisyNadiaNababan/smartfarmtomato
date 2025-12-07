@@ -409,11 +409,11 @@ class _AdminNodesScreenState extends State<AdminNodesScreen> {
   Widget build(BuildContext context) {
     final themeProvider = Provider.of<ThemeProvider>(context);
     final isDarkMode = themeProvider.isDarkMode;
-    final backgroundColor = isDarkMode ? Colors.grey[900]! : Theme.of(context).colorScheme.background;
+    final backgroundColor = isDarkMode ? Colors.grey[900]! : (Theme.of(context).colorScheme.background ?? Colors.white);
     final textColor = isDarkMode ? Colors.white : Colors.black;
-    final cardColor = isDarkMode ? Colors.grey[800]! : Theme.of(context).cardColor;
-    final borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[200];
-    final chipColor = isDarkMode ? Colors.grey[700]! : Colors.grey[100];
+    final cardColor = isDarkMode ? Colors.grey[800]! : (Theme.of(context).cardColor);
+    final borderColor = isDarkMode ? Colors.grey[700]! : Colors.grey[200]!;
+    final chipColor = isDarkMode ? Colors.grey[700]! : Colors.grey[100]!;
     
     return Scaffold(
       backgroundColor: backgroundColor,
