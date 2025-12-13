@@ -5,7 +5,9 @@ import 'package:provider/provider.dart';
 import '../screens/admin/dashboard/admin_dashboard.dart';
 import '../screens/admin/settings/admin_settings.dart';
 import '../screens/admin/Farmer Management/admin_farmers.dart';
+import '../screens/admin/devices/admin_devices.dart';
 import '../screens/admin/lands/admin_lands.dart';
+
 import '../providers/theme_provider.dart';
 
 class AdminNavigation extends StatefulWidget {
@@ -22,7 +24,8 @@ class _AdminNavigationState extends State<AdminNavigation> {
     const AdminDashboardScreen(),
     const AdminFarmersScreen(),
     const AdminLandsScreen(),
-    const AdminSettingsScreen(), // Pindah ke index 3
+    const AdminDevicesScreen(),
+    const AdminSettingsScreen(), 
   ];
 
   @override
@@ -58,6 +61,10 @@ class _AdminNavigationState extends State<AdminNavigation> {
           BottomNavigationBarItem(
             icon: Icon(Icons.agriculture),
             label: 'Lahan',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.device_hub),
+            label: 'Perangkat',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.settings),
