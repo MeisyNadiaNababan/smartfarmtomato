@@ -2,9 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../app_user.dart';
 import 'signup_screen.dart';
-import 'forgot_password_screen.dart'; // TAMBAH IMPORT INI
+import 'forgot_password_screen.dart';
 import '../navigation/farmer_navigation.dart';
 import '../navigation/admin_navigation.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import SharedPreferences
 
 class SignInScreen extends StatefulWidget {
   const SignInScreen({super.key});
@@ -14,13 +15,60 @@ class SignInScreen extends StatefulWidget {
 }
 
 class _SignInScreenState extends State<SignInScreen> {
-  final _email = TextEditingController();
-  final _pass = TextEditingController();
+  final TextEditingController _email = TextEditingController();
+  final TextEditingController _pass = TextEditingController();
   final _form = GlobalKey<FormState>();
 
   bool loading = false;
   bool hidePass = true;
-  bool rememberMe = false;
+  bool rememberMe = false; // Variabel untuk checkbox Remember Me
+
+  @override
+  void initState() {
+    super.initState();
+    // Load saved email saat screen pertama dibuka
+    _loadSavedEmail();
+  }
+
+  // Fungsi untuk memuat email yang tersimpan
+  Future<void> _loadSavedEmail() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final savedRememberMe = prefs.getBool('rememberMe') ?? false;
+      final savedEmail = prefs.getString('savedEmail') ?? '';
+
+      if (savedRememberMe && savedEmail.isNotEmpty) {
+        setState(() {
+          rememberMe = savedRememberMe;
+          _email.text = savedEmail;
+        });
+      }
+    } catch (e) {
+      print("Error loading saved email: $e");
+    }
+  }
+
+  // Fungsi untuk menyimpan email jika Remember Me dicentang
+  Future<void> _saveLoginData() async {
+    final prefs = await SharedPreferences.getInstance();
+    
+    if (rememberMe) {
+      // Simpan email dan status Remember Me
+      await prefs.setString('savedEmail', _email.text.trim());
+      await prefs.setBool('rememberMe', true);
+    } else {
+      // Hapus data jika Remember Me tidak dicentang
+      await prefs.remove('savedEmail');
+      await prefs.setBool('rememberMe', false);
+    }
+  }
+
+  // Fungsi untuk menghapus data login yang tersimpan
+  Future<void> _clearSavedData() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('savedEmail');
+    await prefs.setBool('rememberMe', false);
+  }
 
   // ================= LOGIN FUNCTION BACKEND =================
   Future<void> _login() async {
@@ -42,6 +90,9 @@ class _SignInScreenState extends State<SignInScreen> {
         final userData = await AppUser.getUserRole(cred.user!.uid);
 
         if (mounted) {
+          // SIMPAN EMAIL JIKA REMEMBER ME DICENTANG
+          await _saveLoginData();
+
           // Pesan sukses untuk Login Valid
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -50,13 +101,6 @@ class _SignInScreenState extends State<SignInScreen> {
               duration: Duration(seconds: 2),
             ),
           );
-
-          // Simpan remember me preference jika diperlukan
-          if (rememberMe) {
-            // Anda bisa menambahkan SharedPreferences di sini
-            // await SharedPreferences.getInstance()
-            //     .setBool('rememberMe', true);
-          }
 
           // Akses ke Dashboard sesuai role
           Navigator.pushAndRemoveUntil(
@@ -72,7 +116,7 @@ class _SignInScreenState extends State<SignInScreen> {
       }
     } on FirebaseAuthException catch (e) {
       String msg = "Terjadi kesalahan";
-      
+
       // Sesuaikan pesan error sesuai test case
       switch (e.code) {
         case "user-not-found":
@@ -129,7 +173,7 @@ class _SignInScreenState extends State<SignInScreen> {
               children: [
                 const SizedBox(height: 100),
 
-                // 🔙 Back Button
+                // Back Button
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
@@ -140,7 +184,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                 const SizedBox(height: 10),
 
-                // 🍅 Logo
+                // Logo
                 Image.asset(
                   'images/tomato.png',
                   height: 250,
@@ -171,7 +215,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                 const SizedBox(height: 30),
 
-                // 📧 Email Field
+                // Email Field
                 TextFormField(
                   controller: _email,
                   decoration:
@@ -189,7 +233,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                 const SizedBox(height: 16),
 
-                // 🔑 Password Field
+                // Password Field
                 TextFormField(
                   controller: _pass,
                   obscureText: hidePass,
@@ -216,9 +260,10 @@ class _SignInScreenState extends State<SignInScreen> {
 
                 const SizedBox(height: 10),
 
-                // ✅ Remember Me Checkbox
+                // Remember Me & Forgot Password Row
                 Row(
                   children: [
+                    // Checkbox Remember Me
                     Checkbox(
                       value: rememberMe,
                       onChanged: (value) {
@@ -233,6 +278,8 @@ class _SignInScreenState extends State<SignInScreen> {
                       style: TextStyle(fontSize: 14),
                     ),
                     const Spacer(),
+                    
+                    // Tombol Forgot Password
                     TextButton(
                       onPressed: () {
                         // Navigate ke Forgot Password Screen
@@ -256,7 +303,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                 const SizedBox(height: 18),
 
-                // 🔥 Login Button
+                // Login Button
                 SizedBox(
                   width: double.infinity,
                   height: 48,
@@ -285,7 +332,7 @@ class _SignInScreenState extends State<SignInScreen> {
 
                 const SizedBox(height: 20),
 
-                // 👉 Register Prompt
+                // Register Prompt
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
@@ -310,7 +357,26 @@ class _SignInScreenState extends State<SignInScreen> {
                   ],
                 ),
 
+                // Tombol Reset Saved Data (untuk testing, opsional)
                 const SizedBox(height: 10),
+                TextButton(
+                  onPressed: () async {
+                    await _clearSavedData();
+                    _email.clear();
+                    setState(() => rememberMe = false);
+                    
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Data login direset'),
+                        duration: Duration(seconds: 2),
+                      ),
+                    );
+                  },
+                  child: const Text(
+                    'Reset Saved Data',
+                    style: TextStyle(fontSize: 12, color: Colors.grey),
+                  ),
+                ),
               ],
             ),
           ),
@@ -319,7 +385,7 @@ class _SignInScreenState extends State<SignInScreen> {
     );
   }
 
-  // 🎨 Input Styling Reusable
+  // Input Styling Reusable
   InputDecoration _inputDecoration(String hint, IconData icon) {
     return InputDecoration(
       hintText: hint,
