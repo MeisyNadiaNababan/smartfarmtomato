@@ -9,7 +9,6 @@ import '../control/farmer_control.dart';
 import '../history/farmer_history.dart';
 import '../settings/farmer_settings.dart';
 import '../../../providers/theme_provider.dart';
-import 'package:google_maps_flutter/google_maps_flutter.dart';
 
 class FarmerDashboardScreen extends StatefulWidget {
   const FarmerDashboardScreen({super.key});
@@ -23,6 +22,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   bool _isLoading = true;
   bool _isLoadingLand = true;
+  bool _isLoadingHistory = true;
   int _unreadNotifications = 0;
   bool _notificationsEnabled = true;
 
@@ -51,9 +51,11 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
     'autoMode': true,
   };
 
-  List<ChartData> temperatureData = [];
-  List<ChartData> humidityData = [];
-  List<ChartData> soilMoistureData = [];
+  // Data untuk chart dari history
+  List<Map<String, dynamic>> temperatureHistoryData = [];
+  List<Map<String, dynamic>> humidityHistoryData = [];
+  List<Map<String, dynamic>> soilMoistureHistoryData = [];
+  List<Map<String, dynamic>> brightnessHistoryData = [];
 
   @override
   void initState() {
@@ -61,6 +63,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
     _databaseRef = FirebaseDatabase.instance.ref();
     _loadUserLandData(); // Load data lahan user terlebih dahulu
     _setupRealtimeListener();
+    _loadHistoryData(); // Load data history untuk chart
     _loadNotificationSettings();
     _setupNotificationListener();
   }
@@ -150,6 +153,150 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
     }
   }
 
+  // Method untuk memuat data history untuk chart
+  Future<void> _loadHistoryData() async {
+    try {
+      final historySnapshot = await _databaseRef
+          .child('history_data')
+          .orderByKey()
+          .limitToLast(50) // Ambil 50 data terbaru
+          .get();
+
+      if (historySnapshot.exists) {
+        final List<Map<String, dynamic>> tempData = [];
+        final List<Map<String, dynamic>> humData = [];
+        final List<Map<String, dynamic>> soilData = [];
+        final List<Map<String, dynamic>> lightData = [];
+
+        for (final entry in historySnapshot.children) {
+          final data = entry.value as Map<dynamic, dynamic>?;
+          if (data != null) {
+            final timestamp = _parseTimestamp(data, entry.key.toString());
+            if (timestamp > 0) {
+              final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+              final timeString = date.toIso8601String();
+              
+              final temperature = _toDouble(data['suhu']);
+              final humidity = _toDouble(data['kelembaban_udara']);
+              final soilMoisture = _toDouble(data['kelembaban_tanah']);
+              final brightness = _toDouble(data['kecerahan']);
+
+              if (temperature != null) {
+                tempData.add({
+                  'time': timeString,
+                  'temperature': temperature,
+                });
+              }
+              if (humidity != null) {
+                humData.add({
+                  'time': timeString,
+                  'humidity': humidity,
+                });
+              }
+              if (soilMoisture != null) {
+                soilData.add({
+                  'time': timeString,
+                  'soilMoisture': soilMoisture,
+                });
+              }
+              if (brightness != null) {
+                lightData.add({
+                  'time': timeString,
+                  'brightness': brightness,
+                });
+              }
+            }
+          }
+        }
+
+        // Sort data dari terlama ke terbaru untuk chart
+        tempData.sort((a, b) => a['time'].compareTo(b['time']));
+        humData.sort((a, b) => a['time'].compareTo(b['time']));
+        soilData.sort((a, b) => a['time'].compareTo(b['time']));
+        lightData.sort((a, b) => a['time'].compareTo(b['time']));
+
+        setState(() {
+          temperatureHistoryData = tempData;
+          humidityHistoryData = humData;
+          soilMoistureHistoryData = soilData;
+          brightnessHistoryData = lightData;
+          _isLoadingHistory = false;
+        });
+      } else {
+        setState(() {
+          _isLoadingHistory = false;
+        });
+      }
+    } catch (e) {
+      print('❌ Error loading history data for chart: $e');
+      setState(() {
+        _isLoadingHistory = false;
+      });
+    }
+  }
+
+  int _parseTimestamp(Map<dynamic, dynamic> data, String key) {
+    // 1. Coba dari timestamp field langsung (dalam milliseconds)
+    if (data['timestamp'] != null) {
+      final ts = data['timestamp'];
+      if (ts is int) {
+        final date = DateTime.fromMillisecondsSinceEpoch(ts);
+        if (date.year > 2020) {
+          return ts;
+        }
+      }
+      
+      if (ts is String) {
+        final parsed = int.tryParse(ts);
+        if (parsed != null) {
+          final date = DateTime.fromMillisecondsSinceEpoch(parsed);
+          if (date.year > 2020) {
+            return parsed;
+          }
+        }
+      }
+    }
+
+    // 2. Coba dari datetime field
+    if (data['datetime'] != null) {
+      final dateString = data['datetime'].toString();
+      
+      DateTime? dateTime = DateTime.tryParse(dateString);
+      
+      if (dateTime != null && dateTime.year > 2020) {
+        return dateTime.millisecondsSinceEpoch;
+      }
+    }
+
+    // 3. Parse dari key jika mengandung timestamp
+    try {
+      final parts = key.split('_');
+      for (var part in parts) {
+        if (part.length >= 10) {
+          final possibleTimestamp = int.tryParse(part);
+          if (possibleTimestamp != null) {
+            if (possibleTimestamp < 10000000000) {
+              final milliseconds = possibleTimestamp * 1000;
+              final date = DateTime.fromMillisecondsSinceEpoch(milliseconds);
+              if (date.year > 2020) {
+                return milliseconds;
+              }
+            } else {
+              final date = DateTime.fromMillisecondsSinceEpoch(possibleTimestamp);
+              if (date.year > 2020) {
+                return possibleTimestamp;
+              }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      print('Error parsing timestamp from key: $e');
+    }
+
+    return 0;
+  }
+
   void _loadNotificationSettings() async {
     setState(() {
       _notificationsEnabled = true;
@@ -168,6 +315,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
   }
 
   void _setupRealtimeListener() {
+    // Listen untuk realtime data
     _databaseRef.child('current_data').onValue.listen((event) {
       try {
         final data = event.snapshot.value;
@@ -191,7 +339,8 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
             _isLoading = false;
           });
 
-          _updateChartData();
+          // Tambahkan data realtime ke chart
+          _updateChartWithRealtimeData();
         }
       } catch (e) {
         print('❌ Error reading sensor data: $e');
@@ -220,6 +369,11 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
       }
     });
 
+    // Juga listen untuk history data untuk update chart
+    _databaseRef.child('history_data').limitToLast(1).onChildAdded.listen((event) {
+      _updateChartWithNewHistory(event.snapshot.value);
+    });
+
     Future.delayed(const Duration(seconds: 5), () {
       if (mounted && _isLoading) {
         print('⚠️ No data received, using default values');
@@ -230,23 +384,101 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
     });
   }
 
-  void _updateChartData() {
+  void _updateChartWithRealtimeData() {
     final now = DateTime.now();
-    final timeLabel =
-        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final timeString = now.toIso8601String();
+
+    final tempValue = sensorData['suhu'];
+    final humValue = sensorData['kelembaban_udara'];
+    final soilValue = sensorData['kelembaban_tanah'];
+    final lightValue = sensorData['kecerahan'];
 
     setState(() {
-      temperatureData.add(ChartData(timeLabel, sensorData['suhu']));
-      humidityData.add(ChartData(timeLabel, sensorData['kelembaban_udara']));
-      soilMoistureData
-          .add(ChartData(timeLabel, sensorData['kelembaban_tanah']));
+      // Update data chart dengan data realtime
+      temperatureHistoryData.add({
+        'time': timeString,
+        'temperature': tempValue,
+      });
+      humidityHistoryData.add({
+        'time': timeString,
+        'humidity': humValue,
+      });
+      soilMoistureHistoryData.add({
+        'time': timeString,
+        'soilMoisture': soilValue,
+      });
+      brightnessHistoryData.add({
+        'time': timeString,
+        'brightness': lightValue,
+      });
 
-      if (temperatureData.length > 10) {
-        temperatureData.removeAt(0);
-        humidityData.removeAt(0);
-        soilMoistureData.removeAt(0);
+      // Batasi jumlah data yang ditampilkan
+      if (temperatureHistoryData.length > 20) {
+        temperatureHistoryData.removeAt(0);
+      }
+      if (humidityHistoryData.length > 20) {
+        humidityHistoryData.removeAt(0);
+      }
+      if (soilMoistureHistoryData.length > 20) {
+        soilMoistureHistoryData.removeAt(0);
+      }
+      if (brightnessHistoryData.length > 20) {
+        brightnessHistoryData.removeAt(0);
       }
     });
+  }
+
+  void _updateChartWithNewHistory(dynamic data) {
+    if (data != null && data is Map) {
+      final timestamp = _parseTimestamp(data, '');
+      if (timestamp > 0) {
+        final date = DateTime.fromMillisecondsSinceEpoch(timestamp);
+        final timeString = date.toIso8601String();
+        final temperature = _toDouble(data['suhu']);
+        final humidity = _toDouble(data['kelembaban_udara']);
+        final soilMoisture = _toDouble(data['kelembaban_tanah']);
+        final brightness = _toDouble(data['kecerahan']);
+
+        setState(() {
+          if (temperature != null) {
+            temperatureHistoryData.add({
+              'time': timeString,
+              'temperature': temperature,
+            });
+            if (temperatureHistoryData.length > 20) {
+              temperatureHistoryData.removeAt(0);
+            }
+          }
+          if (humidity != null) {
+            humidityHistoryData.add({
+              'time': timeString,
+              'humidity': humidity,
+            });
+            if (humidityHistoryData.length > 20) {
+              humidityHistoryData.removeAt(0);
+            }
+          }
+          if (soilMoisture != null) {
+            soilMoistureHistoryData.add({
+              'time': timeString,
+              'soilMoisture': soilMoisture,
+            });
+            if (soilMoistureHistoryData.length > 20) {
+              soilMoistureHistoryData.removeAt(0);
+            }
+          }
+          if (brightness != null) {
+            brightnessHistoryData.add({
+              'time': timeString,
+              'brightness': brightness,
+            });
+            if (brightnessHistoryData.length > 20) {
+              brightnessHistoryData.removeAt(0);
+            }
+          }
+        });
+      }
+    }
   }
 
   double _toDouble(dynamic value) {
@@ -625,9 +857,11 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
             setState(() {
               _isLoading = true;
               _isLoadingLand = true;
+              _isLoadingHistory = true;
             });
             await Future.delayed(const Duration(seconds: 1));
             await _loadUserLandData();
+            await _loadHistoryData();
             setState(() {
               _isLoading = false;
             });
@@ -1245,14 +1479,55 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
   }
 
   Widget _buildChartSection(bool isDarkMode) {
+    if (_isLoadingHistory) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: isDarkMode ? Colors.grey[900] : Colors.white,
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isDarkMode ? const Color.fromARGB(255, 30, 25, 25) : Colors.grey.withOpacity(0.2),
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
+              blurRadius: 8,
+              offset: const Offset(0, 2),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              CircularProgressIndicator(
+                color: isDarkMode ? Colors.blue[200] : Colors.blue,
+              ),
+              const SizedBox(height: 12),
+              Text(
+                'Memuat data grafik...',
+                style: TextStyle(
+                  color: isDarkMode ? Colors.white70 : Colors.grey[600],
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
+
+    final hasChartData = temperatureHistoryData.isNotEmpty ||
+        humidityHistoryData.isNotEmpty ||
+        soilMoistureHistoryData.isNotEmpty;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
         color: isDarkMode ? Colors.grey[900] : Colors.white,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-            color:
-                isDarkMode ? const Color.fromARGB(255, 189, 110, 110) : Colors.grey.withOpacity(0.2)),
+          color: isDarkMode ? const Color.fromARGB(255, 142, 71, 71) : Colors.grey.withOpacity(0.2),
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withOpacity(isDarkMode ? 0.3 : 0.1),
@@ -1270,7 +1545,7 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
                   color: isDarkMode ? Colors.blue[200] : Colors.blue),
               const SizedBox(width: 8),
               Text(
-                'Trend Data Sensor',
+                'Trend Data Sensor (20 Data Terakhir)',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1279,43 +1554,90 @@ class _FarmerDashboardScreenState extends State<FarmerDashboardScreen> {
               ),
             ],
           ),
+          const SizedBox(height: 8),
+          Text(
+            'Data dari history dan realtime',
+            style: TextStyle(
+              fontSize: 12,
+              color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+            ),
+          ),
           const SizedBox(height: 16),
-          if (temperatureData.isNotEmpty)
-            SimpleChart(
-              data: temperatureData,
-              title: 'Suhu (°C)',
-              color: const Color(0xFF006B5D),
-              dataType: 'temperature',
-            ),
-          if (temperatureData.isNotEmpty) const SizedBox(height: 16),
-          if (humidityData.isNotEmpty)
-            SimpleChart(
-              data: humidityData,
-              title: 'Kelembaban Udara (%)',
-              color: const Color(0xFFB8860B),
-              dataType: 'humidity',
-            ),
-          if (humidityData.isNotEmpty) const SizedBox(height: 16),
-          if (soilMoistureData.isNotEmpty)
-            SimpleChart(
-              data: soilMoistureData,
-              title: 'Kelembaban Tanah (%)',
-              color: const Color(0xFF558B2F),
-              dataType: 'soilMoisture',
-            ),
-          if (temperatureData.isEmpty &&
-              humidityData.isEmpty &&
-              soilMoistureData.isEmpty)
+          
+          if (hasChartData)
+            Column(
+              children: [
+                if (temperatureHistoryData.isNotEmpty)
+                  SensorHistoryChart(
+                    historyData: temperatureHistoryData,
+                    title: 'Suhu (°C)',
+                    color: const Color(0xFF006B5D),
+                    dataType: 'temperature',
+                    maxDataPoints: 20,
+                  ),
+                
+                if (temperatureHistoryData.isNotEmpty) const SizedBox(height: 16),
+                
+                if (humidityHistoryData.isNotEmpty)
+                  SensorHistoryChart(
+                    historyData: humidityHistoryData,
+                    title: 'Kelembaban Udara (%)',
+                    color: const Color(0xFFB8860B),
+                    dataType: 'humidity',
+                    maxDataPoints: 20,
+                  ),
+                
+                if (humidityHistoryData.isNotEmpty) const SizedBox(height: 16),
+                
+                if (soilMoistureHistoryData.isNotEmpty)
+                  SensorHistoryChart(
+                    historyData: soilMoistureHistoryData,
+                    title: 'Kelembaban Tanah (%)',
+                    color: const Color(0xFF558B2F),
+                    dataType: 'soilMoisture',
+                    maxDataPoints: 20,
+                  ),
+                
+                if (soilMoistureHistoryData.isNotEmpty) const SizedBox(height: 16),
+                
+                if (brightnessHistoryData.isNotEmpty)
+                  SensorHistoryChart(
+                    historyData: brightnessHistoryData,
+                    title: 'Kecerahan',
+                    color: const Color(0xFFB71C1C),
+                    dataType: 'brightness',
+                    maxDataPoints: 20,
+                  ),
+              ],
+            )
+          else
             Container(
-              height: 100,
+              height: 150,
               alignment: Alignment.center,
-              child: Text(
-                'Menunggu data sensor...',
-                style: TextStyle(
-                  color: isDarkMode
-                      ? Colors.white.withOpacity(0.5)
-                      : Colors.grey[500],
-                ),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.show_chart,
+                    size: 48,
+                    color: isDarkMode ? Colors.grey[700] : Colors.grey[400],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Belum ada data untuk grafik',
+                    style: TextStyle(
+                      color: isDarkMode ? Colors.grey[500] : Colors.grey[600],
+                    ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Data akan muncul setelah ada data sensor',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: isDarkMode ? Colors.grey[600] : Colors.grey[500],
+                    ),
+                  ),
+                ],
               ),
             ),
         ],
