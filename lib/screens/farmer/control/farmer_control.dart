@@ -75,7 +75,7 @@ class _ControlScreenState extends State<ControlScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Kontrol manual pompa air dan lampu tubuh',
+              'Kontrol pompa air dan lampu tubuh',
               style: TextStyle(
                   color: isDarkMode
                       ? Theme.of(context).colorScheme.onSurface.withOpacity(0.6)

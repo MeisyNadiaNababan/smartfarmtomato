@@ -37,11 +37,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     'kategori_cahaya': 'Normal',
   };
 
+  // Data sensor sebelumnya untuk deteksi perubahan
+  Map<String, dynamic> _previousSensorData = {
+    'suhu': 0.0,
+    'status_suhu': 'Normal',
+    'kelembaban_udara': 0.0,
+    'status_kelembaban': 'Normal',
+    'kelembaban_tanah': 0.0,
+    'kategori_tanah': 'Normal',
+    'kecerahan': 0.0,
+    'kategori_cahaya': 'Normal',
+  };
+
   // Notifikasi
   int _unreadNotifications = 0;
   
-  // Alert kritis dari history_data dan current_data
+  // Alert kritis dari alerts di Firebase (1 minggu terakhir) + realtime alerts
   List<Map<String, dynamic>> _criticalAlertsList = [];
+  
+  // Realtime alerts yang baru muncul (untuk perbedaan tampilan)
+  List<String> _newRealtimeAlertIds = [];
   
   bool _isLoading = true;
 
@@ -60,7 +75,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
   StreamSubscription? _landsStream;
   StreamSubscription? _nodesStream;
   StreamSubscription? _harvestsStream;
-  StreamSubscription? _historyDataStream;
+  StreamSubscription? _alertsStream;
 
   @override
   void initState() {
@@ -68,7 +83,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     _initializeDashboard();
     _setupNotificationListener();
     _setupRealtimeListener();
-    _setupHistoryDataListener(); // Listener untuk history_data
+    _setupAlertsListener(); // Listener untuk alerts di Firebase
   }
 
   @override
@@ -80,13 +95,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     _landsStream?.cancel();
     _nodesStream?.cancel();
     _harvestsStream?.cancel();
-    _historyDataStream?.cancel();
+    _alertsStream?.cancel();
     super.dispose();
   }
 
   void _initializeDashboard() {
     _loadStatistics();
-    _loadHistoryAlerts(); // Memuat alerts dari history_data
+    _loadAlerts(); // Memuat alerts dari Firebase
   }
 
   void _setupNotificationListener() {
@@ -108,24 +123,25 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         final data = event.snapshot.value;
 
         if (data != null && data is Map) {
+          final newSensorData = {
+            'suhu': _toDouble(data['suhu']),
+            'status_suhu': data['status_suhu']?.toString() ?? 'Normal',
+            'kelembaban_udara': _toDouble(data['kelembaban_udara']),
+            'status_kelembaban': data['status_kelembaban']?.toString() ?? 'Normal',
+            'kelembaban_tanah': _toDouble(data['kelembaban_tanah']),
+            'kategori_tanah': data['kategori_tanah']?.toString() ?? 'Normal',
+            'kecerahan': _toDouble(data['kecerahan']),
+            'kategori_cahaya': data['kategori_cahaya']?.toString() ?? 'Normal',
+          };
+
+          // Deteksi perubahan status untuk generate alert
+          _detectStatusChanges(_previousSensorData, newSensorData);
+
           setState(() {
-            sensorData = {
-              'suhu': _toDouble(data['suhu']),
-              'status_suhu': data['status_suhu']?.toString() ?? 'Normal',
-              'kelembaban_udara': _toDouble(data['kelembaban_udara']),
-              'status_kelembaban':
-                  data['status_kelembaban']?.toString() ?? 'Normal',
-              'kelembaban_tanah': _toDouble(data['kelembaban_tanah']),
-              'kategori_tanah': data['kategori_tanah']?.toString() ?? 'Normal',
-              'kecerahan': _toDouble(data['kecerahan']),
-              'kategori_cahaya':
-                  data['kategori_cahaya']?.toString() ?? 'Normal',
-            };
+            sensorData = newSensorData;
+            _previousSensorData = Map<String, dynamic>.from(newSensorData);
             _isLoading = false;
           });
-
-          // Cek apakah ada kondisi kritis dari current_data
-          _checkCurrentDataForAlerts(data);
         }
       } catch (e) {
         print('❌ Admin: Error reading sensor data: $e');
@@ -142,46 +158,289 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     });
   }
 
-  // Setup listener untuk history_data untuk mendeteksi alert
-  void _setupHistoryDataListener() {
-    _historyDataStream = _databaseRef.child('history_data')
-      .limitToLast(100) // Ambil 100 data terakhir
+  // Deteksi perubahan status sensor untuk generate alert realtime
+  void _detectStatusChanges(Map<String, dynamic> oldData, Map<String, dynamic> newData) {
+    final now = DateTime.now();
+    final timestamp = now.millisecondsSinceEpoch;
+    
+    // Cek perubahan untuk setiap sensor
+    final sensors = [
+      {
+        'type': 'suhu',
+        'value': newData['suhu'],
+        'status': newData['status_suhu'],
+        'old_status': oldData['status_suhu'],
+        'unit': '°C',
+        'category': 'temperature'
+      },
+      {
+        'type': 'kelembaban_udara',
+        'value': newData['kelembaban_udara'],
+        'status': newData['status_kelembaban'],
+        'old_status': oldData['status_kelembaban'],
+        'unit': '%',
+        'category': 'humidity'
+      },
+      {
+        'type': 'kelembaban_tanah',
+        'value': newData['kelembaban_tanah'],
+        'status': newData['kategori_tanah'],
+        'old_status': oldData['kategori_tanah'],
+        'unit': '%',
+        'category': 'soil'
+      },
+      {
+        'type': 'kecerahan',
+        'value': newData['kecerahan'],
+        'status': newData['kategori_cahaya'],
+        'old_status': oldData['kategori_cahaya'],
+        'unit': 'lux',
+        'category': 'light'
+      },
+    ];
+
+    for (final sensor in sensors) {
+      final newStatus = sensor['status'] as String;
+      final oldStatus = sensor['old_status'] as String;
+      
+      // Jika status berubah dari normal ke tidak normal
+      if (_isNormalStatus(oldStatus) && !_isNormalStatus(newStatus)) {
+        _createRealtimeAlert(sensor, timestamp, newStatus, 'warning');
+      }
+      // Jika status berubah dari tidak normal ke normal
+      else if (!_isNormalStatus(oldStatus) && _isNormalStatus(newStatus)) {
+        _createRealtimeAlert(sensor, timestamp, newStatus, 'success');
+      }
+      // Jika status tetap tidak normal (monitoring berkelanjutan)
+      else if (!_isNormalStatus(newStatus)) {
+        // Cek apakah sudah ada alert untuk sensor ini dalam 30 menit terakhir
+        final alertExists = _criticalAlertsList.any((alert) {
+          if (alert['sensor_type'] == sensor['type'] && 
+              alert['source'] == 'realtime_data' &&
+              alert['status'] == newStatus) {
+            final alertTime = DateTime.fromMillisecondsSinceEpoch(alert['timestamp']);
+            final timeDiff = now.difference(alertTime);
+            return timeDiff.inMinutes < 30; // Update setiap 30 menit
+          }
+          return false;
+        });
+        
+        if (!alertExists) {
+          _createRealtimeAlert(sensor, timestamp, newStatus, 'warning');
+        }
+      }
+    }
+  }
+
+  // Cek apakah status termasuk kategori normal
+  bool _isNormalStatus(String status) {
+    final normalStatuses = [
+      'normal', 'baik', 'optimal', 'ideal', 'cukup',
+      'suhu siang ideal', 'suhu malam ideal', 'rh ideal'
+    ];
+    
+    return normalStatuses.contains(status.toLowerCase());
+  }
+
+  // Buat alert realtime dari perubahan sensor
+  void _createRealtimeAlert(Map<String, dynamic> sensor, int timestamp, String status, String alertType) {
+    final sensorType = sensor['type'] as String;
+    final sensorValue = sensor['value'];
+    final unit = sensor['unit'] as String;
+    final category = sensor['category'] as String;
+    
+    // Tentukan severity berdasarkan status
+    String severity = 'low';
+    String title = 'Perubahan Status Sensor';
+    String message = '';
+    
+    switch (status.toLowerCase()) {
+      case 'panas':
+      case 'tinggi':
+      case 'suhu > max toleransi (panas)':
+      case 'rh tinggi':
+      case 'sangat kering':
+      case 'sangat basah':
+      case 'bahaya':
+      case 'risiko jamur':
+        severity = 'high';
+        title = '⚠️ Kondisi Kritis Terdeteksi';
+        message = 'Kondisi $sensorType dalam status kritis: $status';
+        break;
+      case 'dingin':
+      case 'rendah':
+      case 'suhu < min toleransi (dingin)':
+      case 'rh rendah':
+      case 'kering':
+      case 'basah':
+      case 'terang':
+      case 'redup':
+      case 'remang':
+        severity = 'medium';
+        title = 'Perhatian: Kondisi Tidak Optimal';
+        message = '$sensorType menunjukkan kondisi tidak optimal: $status';
+        break;
+      case 'optimal':
+      case 'normal':
+      case 'ideal':
+      case 'baik':
+        severity = 'low';
+        title = '✅ Kondisi Kembali Normal';
+        message = '$sensorType telah kembali ke kondisi normal: $status';
+        break;
+      case 'gelap':
+        severity = 'medium';
+        title = 'Peringatan: Intensitas Cahaya Rendah';
+        message = 'Intensitas cahaya sangat rendah: $status';
+        break;
+    }
+    
+    final alertId = 'realtime_${sensorType}_${timestamp}';
+    
+    final newAlert = {
+      'id': alertId,
+      'title': title,
+      'message': '$message\nNilai: $sensorValue$unit',
+      'severity': severity,
+      'type': alertType,
+      'sensor_type': sensorType,
+      'value': '$sensorValue$unit',
+      'status': status,
+      'category': category,
+      'timestamp': timestamp,
+      'source': 'realtime_data',
+    };
+
+    // Tambahkan ke daftar alert
+    setState(() {
+      // Cek apakah alert dengan ID yang sama sudah ada
+      final existingIndex = _criticalAlertsList.indexWhere((alert) => alert['id'] == alertId);
+      
+      if (existingIndex >= 0) {
+        // Update alert yang sudah ada
+        _criticalAlertsList[existingIndex] = newAlert;
+      } else {
+        // Tambahkan alert baru di posisi teratas
+        _criticalAlertsList.insert(0, newAlert);
+        _newRealtimeAlertIds.add(alertId);
+        
+        // Hapus ID dari daftar new alerts setelah 5 detik
+        Timer(const Duration(seconds: 5), () {
+          if (mounted) {
+            setState(() {
+              _newRealtimeAlertIds.remove(alertId);
+            });
+          }
+        });
+      }
+      
+      // Update total critical alerts (hitung yang severity medium dan high)
+      _criticalAlerts = _criticalAlertsList.where((alert) {
+        return alert['severity'] == 'high' || alert['severity'] == 'medium';
+      }).length;
+      
+      // Batasi hanya 20 alert terbaru
+      if (_criticalAlertsList.length > 20) {
+        _criticalAlertsList = _criticalAlertsList.sublist(0, 20);
+      }
+    });
+
+    // Simpan ke Firebase (opsional)
+    _saveAlertToFirebase(newAlert);
+  }
+
+  // Simpan alert ke Firebase
+  void _saveAlertToFirebase(Map<String, dynamic> alert) {
+    try {
+      final alertRef = _databaseRef.child('alerts').child(alert['id']);
+      alertRef.set(alert).catchError((error) {
+        print('❌ Admin: Error saving alert to Firebase: $error');
+      });
+    } catch (e) {
+      print('❌ Admin: Error in saveAlertToFirebase: $e');
+    }
+  }
+
+  // Setup listener untuk alerts di Firebase (1 minggu terakhir)
+  void _setupAlertsListener() {
+    _alertsStream?.cancel();
+    
+    // Ambil data 1 minggu terakhir
+    final now = DateTime.now();
+    final oneWeekAgo = now.subtract(const Duration(days: 7));
+    final oneWeekAgoTimestamp = oneWeekAgo.millisecondsSinceEpoch;
+    
+    _alertsStream = _databaseRef.child('alerts')
+      .orderByChild('timestamp')
+      .startAt(oneWeekAgoTimestamp)
       .onValue.listen((event) {
         if (!mounted) return;
         
         try {
           final data = event.snapshot.value as Map<dynamic, dynamic>?;
           if (data != null) {
-            _processHistoryDataForAlerts(data);
+            _processAlertsData(data);
+          } else {
+            setState(() {
+              // Jangan hapus realtime alerts, hanya Firebase alerts
+              _criticalAlertsList.removeWhere((alert) => alert['source'] == 'firebase_alerts');
+              _updateCriticalAlertsCount();
+            });
           }
         } catch (e) {
-          print('❌ Admin: Error reading history data: $e');
+          print('❌ Admin: Error reading alerts data: $e');
+          setState(() {
+            _criticalAlertsList.removeWhere((alert) => alert['source'] == 'firebase_alerts');
+            _updateCriticalAlertsCount();
+          });
         }
       });
   }
 
-  // Load alerts dari history_data
-  void _loadHistoryAlerts() {
-    _databaseRef.child('history_data')
+  // Update count critical alerts
+  void _updateCriticalAlertsCount() {
+    _criticalAlerts = _criticalAlertsList.where((alert) {
+      return alert['severity'] == 'high' || alert['severity'] == 'medium';
+    }).length;
+  }
+
+  // Load alerts dari Firebase (1 minggu terakhir)
+  void _loadAlerts() {
+    // Ambil data 1 minggu terakhir
+    final now = DateTime.now();
+    final oneWeekAgo = now.subtract(const Duration(days: 7));
+    final oneWeekAgoTimestamp = oneWeekAgo.millisecondsSinceEpoch;
+    
+    _databaseRef.child('alerts')
       .orderByChild('timestamp')
-      .limitToLast(100)
+      .startAt(oneWeekAgoTimestamp)
       .once()
       .then((event) {
         if (!mounted) return;
         
         final data = event.snapshot.value as Map<dynamic, dynamic>?;
         if (data != null) {
-          _processHistoryDataForAlerts(data);
+          _processAlertsData(data);
+        } else {
+          setState(() {
+            _criticalAlertsList.removeWhere((alert) => alert['source'] == 'firebase_alerts');
+            _updateCriticalAlertsCount();
+          });
         }
       })
       .catchError((error) {
-        print('❌ Admin: Error loading history alerts: $error');
+        print('❌ Admin: Error loading alerts: $error');
+        setState(() {
+          _criticalAlertsList.removeWhere((alert) => alert['source'] == 'firebase_alerts');
+          _updateCriticalAlertsCount();
+        });
       });
   }
 
-  // Proses data history untuk mendeteksi alert
-  void _processHistoryDataForAlerts(Map<dynamic, dynamic> data) {
-    final List<Map<String, dynamic>> alerts = [];
+  // Proses data alerts dari Firebase
+  void _processAlertsData(Map<dynamic, dynamic> data) {
+    final List<Map<String, dynamic>> firebaseAlerts = [];
+    final now = DateTime.now();
     
     data.forEach((key, value) {
       if (value is Map) {
@@ -189,258 +448,52 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             ? value['timestamp'] 
             : DateTime.now().millisecondsSinceEpoch;
         
-        // Cek kondisi kritis berdasarkan nilai sensor
-        final suhu = _toDouble(value['suhu']);
-        final kelembabanUdara = _toDouble(value['kelembaban_udara']);
-        final kelembabanTanah = _toDouble(value['kelembaban_tanah']);
-        final kecerahan = _toDouble(value['kecerahan']);
+        // Cek apakah alert dalam 1 minggu terakhir
+        final alertTime = DateTime.fromMillisecondsSinceEpoch(timestamp);
+        final timeDiff = now.difference(alertTime);
         
-        // Status dari data
-        final statusSuhu = value['status_suhu']?.toString() ?? 'Normal';
-        final statusKelembaban = value['status_kelembaban']?.toString() ?? 'Normal';
-        final kategoriTanah = value['kategori_tanah']?.toString() ?? 'Normal';
-        final kategoriCahaya = value['kategori_cahaya']?.toString() ?? 'Normal';
-        
-        // Deteksi alert berdasarkan status atau nilai ekstrim
-        if (_isCriticalStatus(statusSuhu) || (suhu > 35 || suhu < 15)) {
-          alerts.add(_createAlertFromData(
-            id: key.toString(),
-            type: 'suhu',
-            value: suhu,
-            status: statusSuhu,
-            timestamp: timestamp,
-            source: 'history_data',
-          ));
-        }
-        
-        if (_isCriticalStatus(statusKelembaban) || (kelembabanUdara > 85 || kelembabanUdara < 40)) {
-          alerts.add(_createAlertFromData(
-            id: key.toString(),
-            type: 'kelembaban_udara',
-            value: kelembabanUdara,
-            status: statusKelembaban,
-            timestamp: timestamp,
-            source: 'history_data',
-          ));
-        }
-        
-        if (_isCriticalStatus(kategoriTanah) || (kelembabanTanah > 80 || kelembabanTanah < 30)) {
-          alerts.add(_createAlertFromData(
-            id: key.toString(),
-            type: 'kelembaban_tanah',
-            value: kelembabanTanah,
-            status: kategoriTanah,
-            timestamp: timestamp,
-            source: 'history_data',
-          ));
-        }
-        
-        if (_isCriticalStatus(kategoriCahaya)) {
-          alerts.add(_createAlertFromData(
-            id: key.toString(),
-            type: 'kecerahan',
-            value: kecerahan,
-            status: kategoriCahaya,
-            timestamp: timestamp,
-            source: 'history_data',
-          ));
+        if (timeDiff.inDays <= 7) {
+          final title = value['title']?.toString() ?? 'Alert';
+          final message = value['message']?.toString() ?? 'Tidak ada pesan';
+          final severity = value['severity']?.toString() ?? 'medium';
+          final type = value['type']?.toString() ?? 'warning';
+          final sensorType = value['sensor_type']?.toString();
+          final alertValue = value['value']?.toString();
+          final status = value['status']?.toString();
+          final category = value['category']?.toString() ?? 'system';
+          
+          firebaseAlerts.add({
+            'id': key.toString(),
+            'title': title,
+            'message': message,
+            'severity': severity,
+            'type': type,
+            'sensor_type': sensorType,
+            'value': alertValue,
+            'status': status,
+            'category': category,
+            'timestamp': timestamp,
+            'source': 'firebase_alerts',
+          });
         }
       }
     });
 
-    // Sort by timestamp descending
-    alerts.sort((a, b) => (b['timestamp'] as int).compareTo(a['timestamp'] as int));
+    // Sort by timestamp descending (terbaru di atas)
+    firebaseAlerts.sort((a, b) => (b['timestamp'] as int).compareTo(a['timestamp'] as int));
 
     setState(() {
-      // Ambil hanya 5 alert terbaru
-      _criticalAlertsList = alerts.take(5).toList();
+      // Hapus Firebase alerts yang lama
+      _criticalAlertsList.removeWhere((alert) => alert['source'] == 'firebase_alerts');
+      
+      // Tambahkan Firebase alerts baru
+      _criticalAlertsList.addAll(firebaseAlerts.take(10));
+      
+      // Sort ulang seluruh alerts (Firebase + realtime)
+      _criticalAlertsList.sort((a, b) => (b['timestamp'] as int).compareTo(a['timestamp'] as int));
       
       // Update total critical alerts
-      _criticalAlerts = alerts.length;
-    });
-  }
-
-  // Cek apakah status termasuk kritis
-  bool _isCriticalStatus(String status) {
-    final lowerStatus = status.toLowerCase();
-    return lowerStatus.contains('panas') ||
-           lowerStatus.contains('dingin') ||
-           lowerStatus.contains('bahaya') ||
-           lowerStatus.contains('tinggi') ||
-           lowerStatus.contains('rendah') ||
-           lowerStatus.contains('risiko') ||
-           lowerStatus.contains('kering') ||
-           lowerStatus.contains('basah') ||
-           lowerStatus.contains('sangat') ||
-           lowerStatus.contains('gelap') ||
-           lowerStatus.contains('terang') ||
-           lowerStatus.contains('> max') ||
-           lowerStatus.contains('< min');
-  }
-
-  // Buat alert dari data sensor
-  Map<String, dynamic> _createAlertFromData({
-    required String id,
-    required String type,
-    required double? value,
-    required String status,
-    required dynamic timestamp,
-    required String source,
-  }) {
-    final now = DateTime.now();
-    final alertTime = timestamp is int 
-        ? DateTime.fromMillisecondsSinceEpoch(timestamp)
-        : now;
-    
-    final timeDiff = now.difference(alertTime);
-    
-    // Tentukan severity berdasarkan waktu (lebih baru = lebih tinggi severity)
-    String severity = 'low';
-    if (timeDiff.inHours < 1) {
-      severity = 'high';
-    } else if (timeDiff.inHours < 24) {
-      severity = 'medium';
-    }
-    
-    // Tentukan title dan message berdasarkan type
-    String title = '';
-    String message = '';
-    
-    switch (type) {
-      case 'suhu':
-        title = 'Alert Suhu';
-        message = 'Suhu ${value?.toStringAsFixed(1) ?? '-'}°C - $status';
-        break;
-      case 'kelembaban_udara':
-        title = 'Alert Kelembaban Udara';
-        message = 'Kelembaban ${value?.toStringAsFixed(1) ?? '-'}% - $status';
-        break;
-      case 'kelembaban_tanah':
-        title = 'Alert Kelembaban Tanah';
-        message = 'Kelembaban tanah ${value?.toStringAsFixed(1) ?? '-'}% - $status';
-        break;
-      case 'kecerahan':
-        title = 'Alert Intensitas Cahaya';
-        message = 'Kecerahan ${value?.toStringAsFixed(0) ?? '-'} lux - $status';
-        break;
-    }
-    
-    return {
-      'id': id,
-      'title': title,
-      'message': message,
-      'severity': severity,
-      'type': severity == 'high' ? 'error' : 'warning',
-      'sensor_type': type,
-      'value': value?.toString() ?? '-',
-      'status': status,
-      'timestamp': timestamp is int ? timestamp : now.millisecondsSinceEpoch,
-      'source': source,
-      'category': 'sensor_alert',
-    };
-  }
-
-  // Cek kondisi kritis dari current_data
-  void _checkCurrentDataForAlerts(Map<dynamic, dynamic> data) {
-    final timestamp = DateTime.now().millisecondsSinceEpoch;
-    
-    // Cek suhu
-    final suhu = _toDouble(data['suhu']);
-    final statusSuhu = data['status_suhu']?.toString() ?? 'Normal';
-    
-    if (_isCriticalStatus(statusSuhu)) {
-      _addCurrentDataAlert(
-        title: 'Alert Suhu Real-time',
-        message: 'Suhu ${suhu.toStringAsFixed(1)}°C - $statusSuhu',
-        severity: 'high',
-        sensorType: 'suhu',
-        value: suhu.toString(),
-        status: statusSuhu,
-        timestamp: timestamp,
-      );
-    }
-
-    // Cek kelembaban udara
-    final kelembabanUdara = _toDouble(data['kelembaban_udara']);
-    final statusKelembaban = data['status_kelembaban']?.toString() ?? 'Normal';
-    
-    if (_isCriticalStatus(statusKelembaban)) {
-      _addCurrentDataAlert(
-        title: 'Alert Kelembaban Udara Real-time',
-        message: 'Kelembaban ${kelembabanUdara.toStringAsFixed(1)}% - $statusKelembaban',
-        severity: 'high',
-        sensorType: 'kelembaban_udara',
-        value: kelembabanUdara.toString(),
-        status: statusKelembaban,
-        timestamp: timestamp,
-      );
-    }
-
-    // Cek kelembaban tanah
-    final kelembabanTanah = _toDouble(data['kelembaban_tanah']);
-    final kategoriTanah = data['kategori_tanah']?.toString() ?? 'Normal';
-    
-    if (_isCriticalStatus(kategoriTanah)) {
-      _addCurrentDataAlert(
-        title: 'Alert Kelembaban Tanah Real-time',
-        message: 'Kelembaban tanah ${kelembabanTanah.toStringAsFixed(1)}% - $kategoriTanah',
-        severity: 'high',
-        sensorType: 'kelembaban_tanah',
-        value: kelembabanTanah.toString(),
-        status: kategoriTanah,
-        timestamp: timestamp,
-      );
-    }
-
-    // Cek kecerahan
-    final kecerahan = _toDouble(data['kecerahan']);
-    final kategoriCahaya = data['kategori_cahaya']?.toString() ?? 'Normal';
-    
-    if (_isCriticalStatus(kategoriCahaya)) {
-      _addCurrentDataAlert(
-        title: 'Alert Intensitas Cahaya Real-time',
-        message: 'Kecerahan ${kecerahan.toStringAsFixed(0)} lux - $kategoriCahaya',
-        severity: 'medium',
-        sensorType: 'kecerahan',
-        value: kecerahan.toString(),
-        status: kategoriCahaya,
-        timestamp: timestamp,
-      );
-    }
-  }
-
-  // Tambahkan alert dari current_data
-  void _addCurrentDataAlert({
-    required String title,
-    required String message,
-    required String severity,
-    required String sensorType,
-    required String value,
-    required String status,
-    required int timestamp,
-  }) {
-    final alert = {
-      'id': 'current_${DateTime.now().millisecondsSinceEpoch}',
-      'title': title,
-      'message': message,
-      'severity': severity,
-      'type': severity == 'high' ? 'error' : 'warning',
-      'sensor_type': sensorType,
-      'value': value,
-      'status': status,
-      'timestamp': timestamp,
-      'source': 'current_data',
-      'category': 'sensor_alert',
-    };
-
-    // Tambahkan ke awal list (karena real-time)
-    setState(() {
-      _criticalAlertsList.insert(0, alert);
-      // Batasi maksimal 10 alert
-      if (_criticalAlertsList.length > 10) {
-        _criticalAlertsList = _criticalAlertsList.take(10).toList();
-      }
-      _criticalAlerts = _criticalAlertsList.length;
+      _updateCriticalAlertsCount();
     });
   }
 
@@ -548,8 +601,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
         return '${difference.inMinutes} menit lalu';
       } else if (difference.inHours < 24) {
         return '${difference.inHours} jam lalu';
-      } else if (difference.inDays < 30) {
+      } else if (difference.inDays < 7) {
         return '${difference.inDays} hari lalu';
+      } else if (difference.inDays < 30) {
+        return '${difference.inDays ~/ 7} minggu lalu';
       } else {
         return DateFormat('dd/MM/yyyy').format(time);
       }
@@ -1119,8 +1174,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     switch (source) {
       case 'current_data':
         return 'Data Real-time';
-      case 'history_data':
-        return 'Data History';
+      case 'firebase_alerts':
+        return 'Alerts Sistem';
+      case 'realtime_data':
+        return 'Monitoring Sensor';
       case 'registration':
         return 'Pendaftaran';
       case 'password_reset':
@@ -1200,7 +1257,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
             
             if (mounted) {
               _loadStatistics();
-              _loadHistoryAlerts();
+              _loadAlerts();
               setState(() {
                 _isLoading = false;
               });
@@ -1728,7 +1785,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               Icon(Icons.warning, color: _lightColor),
               const SizedBox(width: 8),
               Text(
-                'Alert Sensor', // Judul diubah menjadi "Alert Sensor"
+                'Alert Sistem (Real-time + 1 Minggu Terakhir)',
                 style: TextStyle(
                   fontSize: 18,
                   fontWeight: FontWeight.bold,
@@ -1768,6 +1825,20 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                 ),
             ],
           ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Icon(Icons.info, size: 14, color: Colors.blue),
+              const SizedBox(width: 4),
+              Text(
+                'Alert realtime otomatis dari perubahan sensor',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.blue,
+                ),
+              ),
+            ],
+          ),
           const SizedBox(height: 16),
           _criticalAlertsList.isEmpty
               ? Padding(
@@ -1781,7 +1852,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(height: 8),
                       Text(
-                        'Tidak ada alert sensor',
+                        'Tidak ada alert',
                         style: TextStyle(
                           color: Colors.green,
                           fontWeight: FontWeight.w500,
@@ -1789,7 +1860,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        'Semua kondisi sensor dalam batas normal',
+                        'Tidak ada alert sistem dalam 1 minggu terakhir',
                         style: TextStyle(
                           fontSize: 12,
                           color: subtitleColor,
@@ -1802,24 +1873,6 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   children: _criticalAlertsList.map((alert) => 
                     _buildAlertItem(alert, isDarkMode, textColor, subtitleColor)).toList(),
                 ),
-          const SizedBox(height: 12),
-          if (_criticalAlerts > 5)
-            Center(
-              child: TextButton.icon(
-                onPressed: () {
-                  // Navigasi ke halaman semua alerts jika perlu
-                  print('Lihat semua alert');
-                },
-                icon: Icon(Icons.list, color: _primaryColor),
-                label: Text(
-                  'Lihat Semua Alert ($_criticalAlerts)',
-                  style: TextStyle(
-                    color: _primaryColor,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-            ),
         ],
       ),
     );
@@ -1829,19 +1882,24 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
     final severity = alert['severity'];
     final color = _getSeverityColor(severity);
     final timeAgo = _formatTimeAgo(alert['timestamp']);
-    final source = alert['source'] ?? 'history_data';
+    final source = alert['source'] ?? 'firebase_alerts';
     final type = alert['type'] ?? 'warning';
     final sensorType = alert['sensor_type'];
     final value = alert['value'];
     final status = alert['status'];
+    final category = alert['category'] ?? 'system';
+    final isNew = _newRealtimeAlertIds.contains(alert['id']);
 
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: isNew ? color.withOpacity(0.2) : color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(
+          color: isNew ? color : color.withOpacity(0.3),
+          width: isNew ? 2 : 1,
+        ),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1861,6 +1919,23 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
                   ),
                 ),
               ),
+              if (isNew)
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  margin: const EdgeInsets.only(right: 8),
+                  decoration: BoxDecoration(
+                    color: Colors.green,
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                  child: const Text(
+                    'BARU',
+                    style: TextStyle(
+                      fontSize: 8,
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
                 decoration: BoxDecoration(
@@ -1886,6 +1961,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
               color: subtitleColor,
             ),
           ),
+          // Tampilkan kategori alert
+          if (category != null && category != 'system')
+            Container(
+              margin: const EdgeInsets.only(top: 4),
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: _getCategoryColor(category).withOpacity(0.1),
+                borderRadius: BorderRadius.circular(4),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Icon(_getCategoryIcon(category), size: 10, color: _getCategoryColor(category)),
+                  const SizedBox(width: 4),
+                  Text(
+                    'Kategori: ${_getCategoryLabel(category)}',
+                    style: TextStyle(
+                      fontSize: 10,
+                      color: _getCategoryColor(category),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           // Tampilkan data sensor jika ada
           if (sensorType != null && value != null)
             Container(
@@ -1997,6 +2096,64 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> {
       case 'medium': return Colors.orange;
       case 'low': return const Color(0xFF1A237E);
       default: return Colors.grey;
+    }
+  }
+
+  // Helper methods untuk kategori alert
+  String _getCategoryLabel(String category) {
+    switch (category) {
+      case 'temperature':
+        return 'Suhu';
+      case 'humidity':
+        return 'Kelembaban';
+      case 'soil':
+        return 'Tanah';
+      case 'light':
+        return 'Cahaya';
+      case 'device':
+        return 'Perangkat';
+      case 'system':
+        return 'Sistem';
+      default:
+        return category;
+    }
+  }
+
+  Color _getCategoryColor(String category) {
+    switch (category) {
+      case 'temperature':
+        return Colors.red;
+      case 'humidity':
+        return Colors.blue;
+      case 'soil':
+        return Colors.brown;
+      case 'light':
+        return Colors.amber;
+      case 'device':
+        return Colors.purple;
+      case 'system':
+        return Colors.grey;
+      default:
+        return Colors.grey;
+    }
+  }
+
+  IconData _getCategoryIcon(String category) {
+    switch (category) {
+      case 'temperature':
+        return Icons.thermostat;
+      case 'humidity':
+        return Icons.water_drop;
+      case 'soil':
+        return Icons.grass;
+      case 'light':
+        return Icons.light_mode;
+      case 'device':
+        return Icons.device_hub;
+      case 'system':
+        return Icons.settings;
+      default:
+        return Icons.info;
     }
   }
 }

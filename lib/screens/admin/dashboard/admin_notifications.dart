@@ -140,38 +140,9 @@ class AdminNotificationService {
     }
   }
 
-  // ================== NOTIFIKASI LAINNYA ==================
-  static Future<void> notifySystemAlert(
-    String title,
-    String message, {
-    String type = 'info',
-    String? action,
-  }) async {
-    try {
-      final timestamp = DateTime.now().millisecondsSinceEpoch;
-      final newRef = _databaseRef.child('admin_notifications').push();
-
-      await newRef.set({
-        'title': title,
-        'message': message,
-        'timestamp': timestamp,
-        'isRead': false,
-        'type': type,
-        'source': 'system',
-        'action': action,
-        'category': 'system',
-        'priority': 'low',
-      });
-
-      print('✅ Notifikasi Sistem: $title');
-    } catch (e) {
-      print('❌ Error notifikasi sistem: $e');
-    }
-  }
-
   // ================== MANAJEMEN NOTIFIKASI ==================
   
-  // Stream untuk mendapatkan semua notifikasi admin
+  // Stream untuk mendapatkan semua notifikasi admin (hanya yang terkait petani dan reset password)
   static Stream<List<AdminNotificationItem>> getNotifications() {
     return _databaseRef
         .child('admin_notifications')
@@ -183,23 +154,33 @@ class AdminNotificationService {
 
       if (data != null) {
         data.forEach((key, value) {
-          notifications.add(AdminNotificationItem(
-            id: key.toString(),
-            title: value['title']?.toString() ?? 'Notifikasi',
-            message: value['message']?.toString() ?? '',
-            source: value['source']?.toString() ?? 'system',
-            isRead: value['isRead'] == true,
-            timestamp: value['timestamp'] ?? DateTime.now().millisecondsSinceEpoch,
-            type: value['type']?.toString() ?? 'info',
-            action: value['action']?.toString(),
-            userId: value['userId']?.toString(),
-            userName: value['userName']?.toString(),
-            userEmail: value['userEmail']?.toString(),
-            requestId: value['requestId']?.toString(),
-            reason: value['reason']?.toString(),
-            category: value['category']?.toString(),
-            priority: value['priority']?.toString() ?? 'medium',
-          ));
+          final source = value['source']?.toString() ?? 'system';
+          final category = value['category']?.toString();
+          
+          // FILTER: Hanya ambil notifikasi yang terkait dengan pendaftaran petani atau reset password
+          final isUserRegistration = category == 'user_registration' || source == 'registration';
+          final isPasswordReset = category == 'password_reset' || source == 'password_reset';
+          
+          if (isUserRegistration || isPasswordReset) {
+            notifications.add(AdminNotificationItem(
+              id: key.toString(),
+              title: value['title']?.toString() ?? 'Notifikasi',
+              message: value['message']?.toString() ?? '',
+              source: source,
+              isRead: value['isRead'] == true,
+              timestamp: value['timestamp'] ?? DateTime.now().millisecondsSinceEpoch,
+              type: value['type']?.toString() ?? 'info',
+              action: value['action']?.toString(),
+              userId: value['userId']?.toString(),
+              userName: value['userName']?.toString(),
+              userEmail: value['userEmail']?.toString(),
+              requestId: value['requestId']?.toString(),
+              reason: value['reason']?.toString(),
+              category: category,
+              priority: value['priority']?.toString() ?? 'medium',
+            ));
+          }
+          // Jika bukan kategori yang diinginkan, kita skip notifikasi ini
         });
       }
 
@@ -210,7 +191,7 @@ class AdminNotificationService {
     });
   }
 
-  // Stream untuk mendapatkan notifikasi belum dibaca
+  // Stream untuk mendapatkan notifikasi belum dibaca (hanya yang terkait petani dan reset password)
   static Stream<int> getUnreadCount() {
     return _databaseRef
         .child('admin_notifications')
@@ -221,7 +202,15 @@ class AdminNotificationService {
 
       if (data != null) {
         data.forEach((key, value) {
-          if (value['isRead'] != true) {
+          final isRead = value['isRead'] == true;
+          final source = value['source']?.toString() ?? 'system';
+          final category = value['category']?.toString();
+          
+          // FILTER: Hanya hitung notifikasi yang terkait dengan pendaftaran petani atau reset password
+          final isUserRegistration = category == 'user_registration' || source == 'registration';
+          final isPasswordReset = category == 'password_reset' || source == 'password_reset';
+          
+          if (!isRead && (isUserRegistration || isPasswordReset)) {
             count++;
           }
         });
@@ -238,14 +227,48 @@ class AdminNotificationService {
         .set(true);
   }
 
-  // Method untuk menandai semua notifikasi sebagai dibaca
+  // Method untuk menandai semua notifikasi sebagai dibaca (hanya yang terkait petani dan reset password)
   static Future<void> markAllAsRead() async {
     final notifications = await _databaseRef.child('admin_notifications').once();
     final data = notifications.snapshot.value as Map<dynamic, dynamic>?;
 
     if (data != null) {
       for (var key in data.keys) {
-        await _databaseRef.child('admin_notifications/$key/isRead').set(true);
+        final value = data[key];
+        final source = value?['source']?.toString() ?? 'system';
+        final category = value?['category']?.toString();
+        
+        // FILTER: Hanya tandai yang terkait dengan pendaftaran petani atau reset password
+        final isUserRegistration = category == 'user_registration' || source == 'registration';
+        final isPasswordReset = category == 'password_reset' || source == 'password_reset';
+        
+        if (isUserRegistration || isPasswordReset) {
+          await _databaseRef.child('admin_notifications/$key/isRead').set(true);
+        }
+      }
+    }
+  }
+
+  // Method untuk menghapus notifikasi yang tidak terkait petani atau reset password
+  static Future<void> cleanUpUnrelatedNotifications() async {
+    final notifications = await _databaseRef.child('admin_notifications').once();
+    final data = notifications.snapshot.value as Map<dynamic, dynamic>?;
+
+    if (data != null) {
+      for (var key in data.keys) {
+        final value = data[key];
+        final source = value?['source']?.toString() ?? 'system';
+        final category = value?['category']?.toString();
+        
+        // FILTER: Hanya simpan yang terkait dengan pendaftaran petani atau reset password
+        final isUserRegistration = category == 'user_registration' || source == 'registration';
+        final isPasswordReset = category == 'password_reset' || source == 'password_reset';
+        
+        // Hapus jika bukan kategori yang diinginkan
+        if (!isUserRegistration && !isPasswordReset) {
+          await _databaseRef.child('admin_notifications/$key').remove();
+          print('🗑️ Menghapus notifikasi tidak terkait: $key');
+        }
       }
     }
   }
@@ -355,5 +378,15 @@ class AdminNotificationItem {
       default:
         return Colors.grey;
     }
+  }
+
+  // Helper method untuk memeriksa apakah notifikasi terkait petani
+  bool get isFarmerRelated {
+    return category == 'user_registration' || source == 'registration';
+  }
+
+  // Helper method untuk memeriksa apakah notifikasi terkait reset password
+  bool get isPasswordResetRelated {
+    return category == 'password_reset' || source == 'password_reset';
   }
 }
